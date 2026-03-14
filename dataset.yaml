@@ -1,0 +1,12 @@
+# 1. The root path of your dataset
+path: /Users/emre/Desktop/FRAMED-FINAL-INSALLAH  
+
+# 2. Relative paths to the images (YOLO looks for a 'labels' folder automatically)
+train: images/
+val: images/ 
+
+# 3. Your Class Dictionary
+names:
+  0: bird
+  1: drone
+  # Match these exactly to the order in your CVAT 'Constructor' tab

@@ -1,1 +1,13 @@
 AI4CUAV-YOLO_FORMAT/
+demo/
+__pycache__/
+AfterSplit/
+BeforeSplit/
+coordinates/
+ExtractedFrames/
+misc/
+yaml-files/
+runs/
+test-source/
+bestmodels/
+archive/

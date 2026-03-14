@@ -69,14 +69,17 @@ def extract_synced_frames(path1, path2, output_dir, target_fps):
     """
     Syncs two videos and extracts pairs at a specific frame rate.
     """
-    raw_filename = os.path.basename(path1)
+    raw_filename_s1 = os.path.basename(path1)
+    raw_filename_s2 = os.path.basename(path2)
     
     # Use the Common ID (the E-number) for the folder name
     # Remove extension from the ID to get the folder name (e.g. E19)
-    common_name = os.path.splitext(get_common_id(raw_filename))[0]
+    common_name = os.path.splitext(get_common_id(raw_filename_s1))[0]
     
     # Extract the full parent video name without extension for the frames
-    parent_name = os.path.splitext(raw_filename)[0]
+    parent_name_s1 = os.path.splitext(raw_filename_s1)[0]
+    parent_name_s2 = os.path.splitext(raw_filename_s2)[0]
+    
     
     # Create output subdirectories
     out_s1 = os.path.join(output_dir, "IR", common_name)
@@ -130,10 +133,11 @@ def extract_synced_frames(path1, path2, output_dir, target_fps):
                 break # Sensor 2 finished early
 
             # 4. Save the pair using the full parent video name
-            img_name = f"{parent_name}_frame{saved_count:06d}.jpg"
+            img_name_s1 = f"{parent_name_s1}_frame{saved_count:06d}.jpg"
+            img_name_s2 = f"{parent_name_s2}_frame{saved_count:06d}.jpg"
             
-            cv2.imwrite(os.path.join(out_s1, img_name), frame1)
-            cv2.imwrite(os.path.join(out_s2, img_name), frame2)
+            cv2.imwrite(os.path.join(out_s1, img_name_s1), frame1)
+            cv2.imwrite(os.path.join(out_s2, img_name_s2), frame2)
 
             saved_count += 1
             

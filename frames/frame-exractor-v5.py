@@ -8,7 +8,7 @@ import argparse
 import time
 import hashlib
 import sys
-exp_type = "N"
+exp_type = "M"
 
 # --- CONFIGURATION ---
 ALLOWED_EXTENSIONS = {'.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv'}

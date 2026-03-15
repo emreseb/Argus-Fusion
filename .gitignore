@@ -12,3 +12,4 @@ test-source/
 bestmodels/
 archive/
 datasetf_output/
+.DS_Store

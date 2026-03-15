@@ -2,8 +2,8 @@ import os
 
 # Update these to your actual paths
 paths = [
-    "/media/emre/SEB/DATASET-(vid)/ROMA/IR",
-    "/media/emre/SEB/DATASET-(vid)/ROMA/EO"
+    "/Users/emre/Desktop/DATASET-(vid)/ROMA/IR",
+    "/Users/emre/Desktop/DATASET-(vid)/ROMA/EO"
 ]
 
 target = "_E"      # Looking for the underscore followed by E

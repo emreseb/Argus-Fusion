@@ -8,7 +8,7 @@ import argparse
 import time
 import hashlib
 import sys
-exp_type = "M"
+exp_type = "ERF"
 
 # --- CONFIGURATION ---
 ALLOWED_EXTENSIONS = {'.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv'}
@@ -203,10 +203,10 @@ def main():
     
     parser.add_argument("--sensor1-dir", 
                         help="Input directory for Sensor 1 videos (Master time reference)",
-                        default="/media/emre/SEB/DATASET-(vid)/18.12.25/IR")
+                        default="/Users/emre/Desktop/DATASET-(vid)/ROMA/IR")
     parser.add_argument("--sensor2-dir",
                         help="Input directory for Sensor 2 videos (Slave time reference)",
-                        default="/media/emre/SEB/DATASET-(vid)/18.12.25/EO")
+                        default="/Users/emre/Desktop/DATASET-(vid)/ROMA/EO")
     parser.add_argument("-o", "--output-dir", default="datasetf_output", 
                         help="Directory to save extracted frame pairs")
     parser.add_argument("-w", "--watch", action="store_true",

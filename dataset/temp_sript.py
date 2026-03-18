@@ -1,8 +1,23 @@
-import os 
-from pathlib import Path
+import os
+import glob
 
-root_dir = Path("/path/to/your/dataset") # Update this to your dataset directory
+# 1. Diagnostic Check
+target_dir = "/Users/emre/Desktop/DATASETv3/images"
 
-for file_path in root_dir.rglob('*.jpg'):
-    if file_path.is_file(): # Ensure it's a file, not a directory
-        print(file_path)
+if not os.path.exists(target_dir):
+    print(f"❌ ERROR: Python cannot see this folder at all. Check the path or Mac permissions.")
+else:
+    print(f"✅ Folder exists! Python can see {len(os.listdir(target_dir))} items inside the top level.")
+
+# 2. Corrected Glob Pattern
+# We use ** to mean "all subfolders" and *.jpg to mean "any file ending in .jpg"
+search_pattern = f"{target_dir}/**/*.jpg"
+
+print("\nScanning for images...")
+# 3. Run the loop
+count = 0
+for file in glob.glob(search_pattern, recursive=True):
+    print(file)
+    count += 1
+
+print(f"\nFound a total of {count} images.")

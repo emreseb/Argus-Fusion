@@ -2,8 +2,8 @@ import os
 import re
 
 # --- Configuration ---
-images_dir = "/Users/emre/Desktop/DATASETv3/images/" 
-labels_dir = "/Users/emre/Desktop/DATASETv3/labels/obj_train_data/ROMA_RENAMED" 
+images_dir = "/Users/emre/Desktop/DATASETv3/images" 
+labels_dir = "/Users/emre/Desktop/DATASETv3/labels/obj_train_data" 
 
 def extract_key_and_frame(filename):
     """

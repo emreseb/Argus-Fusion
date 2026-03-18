@@ -4,7 +4,7 @@ Make sure the tasks are done in this order, and that all of your scripts are in 
 
 ## Getting information on the existing files
 
-The `list_jpg.bat` and `txt_list.jpg` go recursively through a folder you specify(at the top of the batch files) and all its subfolders to retrieve the lists (with full links) of the images and labels and store them into `jpg_list.txt` and `txt_list.txt` respectively.
+The `list_jpg.bat` and `txt_list.bat` go recursively through a folder you specify(at the top of the batch files) and all its subfolders to retrieve the lists (with full links) of the images and labels and store them into `jpg_list.txt` and `txt_list.txt` respectively.
 
 ## Moving files into a folder
 

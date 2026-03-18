@@ -2,16 +2,22 @@ import os
 import re
 
 # --- Configuration ---
-images_dir = "/Users/emre/Desktop/DATASETv3/images" 
-labels_dir = "/Users/emre/Desktop/DATASETv3/labels/obj_train_data" 
+images_dir = "/Users/emre/Desktop/DATASETv3/images/" 
+labels_dir = "/Users/emre/Desktop/DATASETv3/labels/obj_train_data/ROMA_RENAMED" 
 
 def extract_key_and_frame(filename):
     """
-    Extracts the key (e.g., B20) and the frame number (e.g., 000000).
+    Extracts the key (e.g., B20, ERF19) and the frame number (e.g., 000000 or 0).
     """
-    match = re.search(r'([A-Z]\d+).*?(\d{6})', filename)
+    # [A-Z]+\d+  -> Matches 1 or more letters followed by digits (e.g., B20, ERF19)
+    # .*?        -> Matches any characters in between
+    # (\d+)$     -> Matches 1 or more digits right at the end of the filename
+    match = re.search(r'([A-Z]+\d+).*?(\d+)$', filename)
     if match:
-        return match.group(1), match.group(2)
+        key = match.group(1)
+        # Convert the frame string to an integer so '000000' and '0' both become exactly 0
+        frame = int(match.group(2))
+        return key, frame
     return None, None
 
 def sync_filenames():
@@ -23,7 +29,7 @@ def sync_filenames():
             if img_file.lower().endswith(('.jpg', '.jpeg', '.png')):
                 name_no_ext = os.path.splitext(img_file)[0]
                 key, frame = extract_key_and_frame(name_no_ext)
-                if key and frame:
+                if key and frame is not None: # Check 'is not None' because frame could be 0
                     full_name_map[(key, frame)] = name_no_ext
 
     print(f"\nRecursively renaming label files in: {labels_dir}")
@@ -38,7 +44,7 @@ def sync_filenames():
                 key, frame = extract_key_and_frame(label_no_ext)
                 
                 # Check 1: Did the regex successfully find a Key and Frame?
-                if key and frame:
+                if key and frame is not None:
                     # Check 2: Does this Key/Frame exist in our images map?
                     if (key, frame) in full_name_map:
                         new_name = full_name_map[(key, frame)] + ".txt"

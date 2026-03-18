@@ -3,8 +3,8 @@ import re
 
 # --- Configuration ---
 # Update these to the folders where your files are currently located
-images_dir = "/path/to/your/images" # Contains files like 1_100_1_B20_000000.jpg
-labels_dir = "/path/to/your/labels" # Contains files like B20_Frame_000000.txt
+images_dir = "Users/emre/Desktop/DATASETv3/images" # Contains files like 1_100_1_B20_000000.jpg
+labels_dir = "Users/emre/Desktop/DATASETv3/labels" # Contains files like B20_Frame_000000.txt
 
 def extract_key_and_frame(filename):
     """

@@ -13,3 +13,14 @@ bestmodels/
 archive/
 datasetf_output/
 .DS_Store
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# Audit and Clean Script Artifacts
+audit_progress*
+unmatched_report.txt
+.processed_log
+files_to_delete_V3*

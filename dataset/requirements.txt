@@ -1,0 +1,8 @@
+# --- Dataset Auditing & Visualization ---
+# Required for: audit_dataset_updated_for_EO&IR.py
+opencv-python>=4.8.0
+pyperclip>=1.8.2
+
+# --- Dataset Splitting ---
+# Required for: test-train-split.py
+split-folders>=0.5.1

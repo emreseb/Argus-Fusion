@@ -9,8 +9,6 @@ if not os.path.exists(target_dir):
 else:
     print(f"✅ Folder exists! Python can see {len(os.listdir(target_dir))} items inside the top level.")
 
-# 2. Corrected Glob Pattern
-# We use ** to mean "all subfolders" and *.jpg to mean "any file ending in .jpg"
 search_pattern = f"{target_dir}/**/*.jpg"
 
 print("\nScanning for images...")
@@ -21,3 +19,4 @@ for file in glob.glob(search_pattern, recursive=True):
     count += 1
 
 print(f"\nFound a total of {count} images.")
+

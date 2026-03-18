@@ -6,7 +6,7 @@ model = YOLO("yolo11x.pt")
 
 # 2. Train with M4-specific settings
 results = model.train(
-    data="your_dataset.yaml", 
+    data="yaml-files/overfit-dataset.yaml", 
     epochs=300,            # High epochs to ensure overfitting
     imgsz=640,             # Standard resolution (or 1280 for tiny objects)
     device="mps",          # CRITICAL: Forces use of Mac GPU

@@ -3,8 +3,9 @@ import cv2
 import math
 import os
 
-cap = cv2.VideoCapture("BeforeSplit/DJI_20251028133726_0001_V.MP4")
-model = YOLO("bestmodels/best14.pt")
+cap = cv2.VideoCapture("")
+
+model = YOLO("best.pt")
 classNames = ["Drone"]
 
 cv2.namedWindow('Yolo Detection', cv2.WINDOW_NORMAL)

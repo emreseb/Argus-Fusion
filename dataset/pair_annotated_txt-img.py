@@ -21,31 +21,15 @@ def pair_annotated_images(txt_dir, img_dir, output_dir):
     for filename in os.listdir(txt_dir): 
         if filename.endswith('.txt'):
             base_name = os.path.splitext(filename)[0]
+                    
+            """We need EO and IR, we need to check if the basename on both of the folder contains the same
+            key such as B29 as well as the same frame number such as 00001. If both of them are the same, we can say that they are paired.
+            """
+            eo_base_name = base_name.__contains__("_0_")
+            ir_base_name = base_name.__contains__("_1_")
             
-            # Checks for the images based on the text file's base name
-            eo_img_path = os.path.join(img_dir, f"{base_name}.jpg")
-            ir_img_path = os.path.join(img_dir, f"{base_name}.jpg")
-            txt_file_path = os.path.join(txt_dir, filename)
-            
-            if os.path.exists(eo_img_path) and os.path.exists(ir_img_path):
-
-                pair_folder = os.path.join(output_dir, base_name)
-                os.makedirs(pair_folder, exist_ok=True)
-                
-                shutil.copy(eo_img_path, pair_folder)
-                shutil.copy(ir_img_path, pair_folder)
-                shutil.copy(txt_file_path, pair_folder)
-                
-                done += 1
-                print(f"📁 Created folder and paired: {base_name}")
-                
-            else:
-                undone += 1
-                print(f"Missing pair for: {filename}")
-                
-    print(f"Total {done} files paired successfully.")
-    print(f"Total {undone} files without pairs.")
-                
+            eo_img_path = os.path.join(img_dir, eo_base_name + '.jpg')       
+            ir_img_path = os.path.join(img_dir, ir_base_name + '.jpg')           
 
 def main():
     txt_dir = '/home/emre/Desktop/NATO/DATASETv3/labels/obj_train_data'

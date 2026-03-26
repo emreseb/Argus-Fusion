@@ -21,7 +21,7 @@ if torch.cuda.is_available()==True:
                     imgsz=640,
                     batch=-1,
                     device='cuda',
-                    pretrained=True,
+                    pretrained=False,
                     patience=50, #epochs to stop after plateu of performance
                     save=True,
                     fraction= 1, #% of training dataset to use

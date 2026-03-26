@@ -5,8 +5,8 @@ from PIL import Image, ImageDraw
 
 # --- Configuration ---
 # Hardcoded to your exact paths
-images_dir = "/Users/emre/Desktop/DATASETv3/images" 
-labels_dir = "/Users/emre/Desktop/DATASETv3/labels/obj_train_data" 
+images_dir = "/home/emre/Desktop/DATASETv3/images" 
+labels_dir = "/home/emre/Desktop/DATASETv3/labels/obj_train_data" 
 
 # --- Exact Mapping Logic from Previous Script ---
 def extract_key_and_frame(filename):
@@ -29,7 +29,8 @@ def load_dataset():
     images_map = {}
     for root, _, files in os.walk(images_dir):
         for img_file in files:
-            if img_file.lower().endswith(('.jpg', '.jpeg', '.png')):
+            # FIXED: Ignore hidden macOS AppleDouble files starting with '.'
+            if img_file.lower().endswith(('.jpg', '.jpeg', '.png')) and not img_file.startswith('.'):
                 name_no_ext = os.path.splitext(img_file)[0]
                 key, frame = extract_key_and_frame(name_no_ext)
                 sensor = get_sensor_type(root, name_no_ext)
@@ -39,7 +40,8 @@ def load_dataset():
     labels_map = {}
     for root, _, files in os.walk(labels_dir):
         for label_file in files:
-            if label_file.endswith('.txt'):
+            # FIXED: Ignore hidden macOS text files starting with '.'
+            if label_file.endswith('.txt') and not label_file.startswith('.'):
                 label_no_ext = os.path.splitext(label_file)[0]
                 key, frame = extract_key_and_frame(label_no_ext)
                 sensor = get_sensor_type(root, label_no_ext)

@@ -1,9 +1,10 @@
 # 1. The root path of your dataset
-path: /Users/emre/Desktop/FRAMED-FINAL-INSALLAH  
+path: /Users/emre/Desktop/DATASETv3 
 
 # 2. Relative paths to the images (YOLO looks for a 'labels' folder automatically)
 train: images/
-#val: 
+val: images/
+test: images/
 
 # 3. Your Class Dictionary
 names:

@@ -1,5 +1,5 @@
 # 1. The root path of your dataset
-path: /Users/emre/Desktop/DATASETv3 
+path: /users/home/aiproject/ProjectAi4Cuav/DATASETv3 
 
 # 2. Relative paths to the images (YOLO looks for a 'labels' folder automatically)
 train: images/

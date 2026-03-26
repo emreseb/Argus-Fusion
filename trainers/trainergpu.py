@@ -2,10 +2,10 @@ from ultralytics import YOLO
 from pathlib import Path
 import torch
 #NEEDS CUDA
-model = YOLO("bestmodels/best14.pt")
+model = YOLO("yolo11m.pt")
 
 # This is the path to my YAML relative to my CWD
-rel_path = "archive/drones.v1i.yolov11/data.yaml"
+rel_path = "/users/home/aiproject/ProjectAi4Cuav/REPO/DATASET-TOOLS/overfit_dataset.yaml"
 
 # This file _does_ exist
 assert Path(rel_path).exists(), "File doesn't exist"
@@ -39,3 +39,6 @@ if torch.cuda.is_available()==True:
     
 results = model.val()  # runs evaluation on the validation split
 print(results.metrics)  # shows precision, recall, mAP50, mAP50-95
+
+
+ 

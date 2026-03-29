@@ -1,52 +1,95 @@
 import os
+import shutil
 from pathlib import Path
 
 """
-This script checks if all txts have a img and vice versa. This step was important to 
-ensure that we have only paired outputs.
+This script checks if every EO (_0_) image has its exact IR (_1_) twin,
+and vice versa, down to the exact frame number.
+It automatically ignores macOS hidden metadata files (._)
+and copies all successful pairs to a new directory.
 """
 
+images_dir = "/home/emre/Desktop/NATO/DATASETv3/images(all)"
+output_dir = "/home/emre/Desktop/NATO/DATASETv3/twin_eo_ir"
 
-images_dir = "/home/emre/Desktop/NATO/DATASETv3/only_paired_output/img"
-labels_dir = "/home/emre/Desktop/NATO/DATASETv3/only_paired_output/txt"
+def check_and_copy_pairs():
+    print(f"Scanning for EO/IR image pairs in: {images_dir}\n")
+    
+    eo_images = {}
+    ir_images = {}
+    
+    # 1. Gather all images and create their Universal Keys
+    for img_path in Path(images_dir).rglob("*.jpg"):
+        filename = img_path.name
+        
+        # Skip hidden metadata files
+        if filename.startswith('.'):
+            continue
+            
+        # Sort into EO and IR dictionaries, storing the full Path object
+        if "_0_" in filename:
+            universal_key = filename.replace("_0_", "_X_")
+            eo_images[universal_key] = img_path
+            
+        elif "_1_" in filename:
+            universal_key = filename.replace("_1_", "_X_")
+            ir_images[universal_key] = img_path
 
-def check_dataset_pairs():
-    print(f"Scanning images in: {images_dir}")
-    print(f"Scanning labels in: {labels_dir}\n")
-
-    image_files = list(Path(images_dir).rglob("*.jpg"))
-    label_files = list(Path(labels_dir).rglob("*.txt"))
-
-    image_names = {img.stem for img in image_files}
-    label_names = {lbl.stem for lbl in label_files}
-
-    images_without_labels = image_names - label_names
-    labels_without_images = label_names - image_names
-
-    print(f"Total Images Found: {len(image_names)}")
-    print(f"Total Labels Found: {len(label_names)}")
-    print("-" * 40)
-
-    if not images_without_labels and not labels_without_images:
-        print("Every image has a label, and every label has an image.")
+    # 2. Compare the sets of Universal Keys
+    eo_keys = set(eo_images.keys())
+    ir_keys = set(ir_images.keys())
+    
+    paired_keys = eo_keys.intersection(ir_keys)
+    missing_ir = eo_keys - ir_keys  # EO exists, missing IR twin
+    missing_eo = ir_keys - eo_keys  # IR exists, missing EO twin
+    
+    # 3. Print the report
+    print(f"Total EO Images Found: {len(eo_images)}")
+    print(f"Total IR Images Found: {len(ir_images)}")
+    print("-" * 60)
+    
+    if not missing_ir and not missing_eo:
+        print(f"PERFECT MATCH! All {len(paired_keys)} pairs are complete and symmetrical.")
     else:
-        if images_without_labels:
-            print(f"Found {len(images_without_labels)} images missing their .txt labels.")
-            # Print the first 5 so you know exactly what to look for
-            for name in list(images_without_labels)[:5]:
-                print(f"   - Missing label for: {name}.jpg")
-            if len(images_without_labels) > 5:
-                print(f"   ... and {len(images_without_labels) - 5} more.")
+        print(f"Successfully Paired: {len(paired_keys)} sets\n")
+        
+        if missing_ir:
+            print(f"Found {len(missing_ir)} EO images missing their IR twin:")
+            for key in list(missing_ir)[:10]:
+                # .name extracts just the filename from the stored Path object
+                eo_name = eo_images[key].name
+                expected_twin = eo_name.replace("_0_", "_1_")
+                print(f"   - {eo_name}  -->  Missing: {expected_twin}")
+            if len(missing_ir) > 10:
+                print(f"   ... and {len(missing_ir) - 10} more.")
+            print()
+            
+        if missing_eo:
+            print(f"Found {len(missing_eo)} IR images missing their EO twin:")
+            for key in list(missing_eo)[:10]:
+                ir_name = ir_images[key].name
+                expected_twin = ir_name.replace("_1_", "_0_")
+                print(f"   - {ir_name}  -->  Missing: {expected_twin}")
+            if len(missing_eo) > 10:
+                print(f"   ... and {len(missing_eo) - 10} more.")
 
-        print()
-
-        if labels_without_images:
-            print(f"Found {len(labels_without_images)} 'Ghost' labels without a matching image.")
-            for name in list(labels_without_images)[:5]:
-                print(f"   - Orphaned label: {name}.txt")
-            if len(labels_without_images) > 5:
-                print(f"   ... and {len(labels_without_images) - 5} more.")
+    # 4. Copy the successful pairs to the new directory
+    if paired_keys:
+        print("-" * 60)
+        print(f"Copying {len(paired_keys)} valid pairs ({len(paired_keys) * 2} total images) to:")
+        print(f"{output_dir}")
+        
+        # exist_ok=True prevents the script from crashing if the folder already exists
+        os.makedirs(output_dir, exist_ok=True)
+        
+        for key in paired_keys:
+            shutil.copy(eo_images[key], output_dir)
+            shutil.copy(ir_images[key], output_dir)
+            
+        print("\nCopy operation complete.")
 
 if __name__ == "__main__":
-    check_dataset_pairs()
-    
+    if not Path(images_dir).exists():
+        print(f"Error: Images directory '{images_dir}' does not exist.")
+    else:
+        check_and_copy_pairs()

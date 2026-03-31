@@ -14,7 +14,7 @@ labels_dir = "/home/emre/Desktop/NATO/DATASETv3/labels(removed empty txts)/obj_t
 output_base_dir = "/home/emre/Desktop/NATO/DATASETv3/pairtxtimg"
 
 DEBUG_MODE = True
-MOVE_FILES = False  # Set to True to transfer the matched files
+MOVE_FILES = True  
 
 def check_and_transfer_pairs():
     if DEBUG_MODE:

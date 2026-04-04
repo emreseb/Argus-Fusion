@@ -316,7 +316,7 @@ def plot_experiment_condition(experiment_condition):
 
 
 def main():
-    base_dir = "/home/emre/Desktop/NATO/DATASETv3/fully_paired_annotated/images"
+    base_dir = "/home/emre/Desktop/NATO/DATASETv3/images(all)"
     counts, condition_sensor, experiment_sensor, experiment_condition, warnings = count_files(base_dir)
 
     # Console output

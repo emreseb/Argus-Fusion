@@ -18,7 +18,7 @@ from flask import Flask, render_template_string, jsonify, request, send_file
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 IMAGES_DIR   = "/home/emre/Desktop/NATO/DATASETv3/images(all)"
-LABELS_DIR   = "/home/emre/Desktop/NATO/DATASETv3/fully_paired_annotated/labels"
+LABELS_DIR   = "/home/emre/Desktop/NATO/DATASETv3/labels(removed empty txts)/obj_train_data"
 HISTORY_FILE = "rename_history.json"
 # ───────────────────────────────────────────────────────────────────────────────
 
@@ -177,6 +177,7 @@ def commit():
             if old_img.exists():
                 new_img = Path(IMAGES_DIR) / (new_stem + ext)
                 old_img.rename(new_img)
+                print(f"Renamed image: {old_img.name} → {new_img.name}")
                 results["renamed"].append(f"{old_img.name} → {new_img.name}")
                 img_renamed = True
                 break
@@ -190,6 +191,7 @@ def commit():
         if old_txt.exists():
             new_txt = Path(LABELS_DIR) / (new_stem + ".txt")
             old_txt.rename(new_txt)
+            print(f"Renamed label: {old_txt.name} → {new_txt.name}")
             results["renamed"].append(f"{old_txt.name} → {new_txt.name}")
         else:
             results["skipped_labels"].append(f"No label for: {original_stem} (image renamed only)")

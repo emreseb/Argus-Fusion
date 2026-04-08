@@ -178,6 +178,28 @@ def commit():
                 new_img = Path(IMAGES_DIR) / (new_stem + ext)
                 old_img.rename(new_img)
                 print(f"Renamed image: {old_img.name} → {new_img.name}")
+                twin_sensor = old_img
+                """
+                #TODO:
+                when the name of a given sensor is flipped, we also want to rename 
+                its twin sensor (if exists) to maintain pairing.:
+                To find the frames you can use their "unique" name e.g
+                
+                1_000_1_R1_frame000014 (IR)
+                1_000_0_R1_frame000014 (EO)
+                These are two twin frames. To find them use their unique part 
+                "R1_frame000014" and rename both when one of them is flipped as well 
+                as the corresponding labels. 
+                
+                A total of 4 files will be renamed.
+                """
+                
+                
+                
+                
+                
+                
+                
                 results["renamed"].append(f"{old_img.name} → {new_img.name}")
                 img_renamed = True
                 break

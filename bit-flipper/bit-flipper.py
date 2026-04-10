@@ -80,7 +80,8 @@ def flip_bit_generic(stem: str, cat: str) -> str | None:
     ldb = parts[ldb_idx].zfill(3)
 
     if   cat == "item":
-        parts[i_idx]   = "1" if parts[i_idx] == "0" else "0"
+        # Cycle: 0 (Bird) -> 1 (Drone) -> 2 (No Drone) -> 0
+        parts[i_idx] = {"0": "1", "1": "2", "2": "0"}.get(parts[i_idx], "0")
     elif cat == "light":
         parts[ldb_idx] = ("1" if ldb[0]=="0" else "0") + ldb[1] + ldb[2]
     elif cat == "distance":
@@ -163,72 +164,115 @@ def get_history():
     return jsonify(load_history())
 
 
+def get_unique_suffix(stem: str) -> str:
+    parts    = stem.split("_")
+    num_idxs = [i for i, p in enumerate(parts) if p.isdigit()]
+    if len(num_idxs) < 3:
+        return ""
+    after_s = num_idxs[2] + 1
+    return "_".join(parts[after_s:])
+
+
+def find_twin(original_stem: str, new_stem: str) -> tuple[str, str] | None:
+    parts    = original_stem.split("_")
+    num_idxs = [i for i, p in enumerate(parts) if p.isdigit()]
+    if len(num_idxs) < 3:
+        return None
+
+    s_idx     = num_idxs[2]
+    current_s = parts[s_idx]
+    twin_s    = "1" if current_s == "0" else "0"
+
+    twin_parts        = parts[:]
+    twin_parts[s_idx] = twin_s
+    twin_orig_stem    = "_".join(twin_parts)
+
+    new_parts         = new_stem.split("_")
+    twin_new_parts    = new_parts[:]
+    twin_new_parts[s_idx] = twin_s
+    twin_new_stem     = "_".join(twin_new_parts)
+
+    for ext in (".jpg", ".jpeg", ".png"):
+        if (Path(IMAGES_DIR) / (twin_orig_stem + ext)).exists():
+            return twin_orig_stem, twin_new_stem
+
+    return None
+
+
+def rename_file_and_label(
+    stem: str, new_stem: str,
+    results: dict, history: dict,
+    is_twin: bool = False
+) -> bool:
+    tag = "[twin] " if is_twin else ""
+
+    img_renamed = False
+    for ext in (".jpg", ".jpeg", ".png"):
+        old_img = Path(IMAGES_DIR) / (stem + ext)
+        if old_img.exists():
+            new_img = Path(IMAGES_DIR) / (new_stem + ext)
+            old_img.rename(new_img)
+            print(f"Renamed {tag}image: {old_img.name} → {new_img.name}")
+            results["renamed"].append(f"{tag}{old_img.name} → {new_img.name}")
+            img_renamed = True
+            break
+
+    if not img_renamed:
+        results["errors"].append(f"{tag}Image not found: {stem}")
+        return False
+
+    old_txt = Path(LABELS_DIR) / (stem + ".txt")
+    if old_txt.exists():
+        new_txt = Path(LABELS_DIR) / (new_stem + ".txt")
+        old_txt.rename(new_txt)
+        print(f"Renamed {tag}label: {old_txt.name} → {new_txt.name}")
+        results["renamed"].append(f"{tag}{old_txt.name} → {new_txt.name}")
+    else:
+        results["skipped_labels"].append(
+            f"{tag}No label for: {stem} (image renamed only)"
+        )
+
+    true_original = next(
+        (k for k, v in history.items() if v["new_stem"] == stem),
+        stem
+    )
+    history[true_original] = {
+        "new_stem":  new_stem,
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "is_twin":   is_twin,
+    }
+    return True
+
+
 @app.route("/commit", methods=["POST"])
 def commit():
     results = {"renamed": [], "errors": [], "skipped_labels": []}
     history = load_history()
+    already_handled: set[str] = set()
 
     for original_stem, new_stem in list(flip_registry.items()):
 
-        # ── Rename image ──────────────────────────────────────────────────────
-        img_renamed = False
-        for ext in (".jpg", ".jpeg", ".png"):
-            old_img = Path(IMAGES_DIR) / (original_stem + ext)
-            if old_img.exists():
-                new_img = Path(IMAGES_DIR) / (new_stem + ext)
-                old_img.rename(new_img)
-                print(f"Renamed image: {old_img.name} → {new_img.name}")
-                twin_sensor = old_img
-                """
-                #TODO:
-                when the name of a given sensor is flipped, we also want to rename 
-                its twin sensor (if exists) to maintain pairing.:
-                To find the frames you can use their "unique" name e.g
-                
-                1_000_1_R1_frame000014 (IR)
-                1_000_0_R1_frame000014 (EO)
-                These are two twin frames. To find them use their unique part 
-                "R1_frame000014" and rename both when one of them is flipped as well 
-                as the corresponding labels. 
-                
-                A total of 4 files will be renamed.
-                """
-                
-                
-                
-                
-                
-                
-                
-                results["renamed"].append(f"{old_img.name} → {new_img.name}")
-                img_renamed = True
-                break
-
-        if not img_renamed:
-            results["errors"].append(f"Image not found: {original_stem}")
+        if original_stem in already_handled:
+            queued.discard(original_stem)
+            del flip_registry[original_stem]
             continue
 
-        # ── Rename label (graceful — skip if missing) ─────────────────────────
-        old_txt = Path(LABELS_DIR) / (original_stem + ".txt")
-        if old_txt.exists():
-            new_txt = Path(LABELS_DIR) / (new_stem + ".txt")
-            old_txt.rename(new_txt)
-            print(f"Renamed label: {old_txt.name} → {new_txt.name}")
-            results["renamed"].append(f"{old_txt.name} → {new_txt.name}")
-        else:
-            results["skipped_labels"].append(f"No label for: {original_stem} (image renamed only)")
+        ok = rename_file_and_label(original_stem, new_stem, results, history)
+        if not ok:
+            queued.discard(original_stem)
+            del flip_registry[original_stem]
+            continue
 
-        # ── Update history ────────────────────────────────────────────────────
-        # If this stem was itself a prior rename, chain back to the true original
-        true_original = next(
-            (k for k, v in history.items() if v["new_stem"] == original_stem),
-            original_stem
-        )
-        history[true_original] = {
-            "new_stem":  new_stem,
-            "timestamp": datetime.now().isoformat(timespec="seconds"),
-            "label_renamed": old_txt.exists(),   # always False here since we already renamed it; kept for schema clarity
-        }
+        already_handled.add(original_stem)
+
+        twin = find_twin(original_stem, new_stem)
+        if twin:
+            twin_orig, twin_new = twin
+            if twin_orig not in already_handled:
+                rename_file_and_label(twin_orig, twin_new, results, history, is_twin=True)
+                already_handled.add(twin_orig)
+                queued.discard(twin_orig)
+                flip_registry.pop(twin_orig, None)
 
         queued.discard(original_stem)
         del flip_registry[original_stem]
@@ -367,7 +411,7 @@ HTML_TEMPLATE = """
 
   <h2>Flip bit</h2>
   <div style="display:flex;flex-direction:column;gap:6px;">
-    <button class="btn flip-btn" data-cat="item"       style="background:#1a2e4a;color:#60a5fa;">[I] Item</button>
+    <button class="btn flip-btn" data-cat="item"       style="background:#1a2e4a;color:#60a5fa;">[I] Item (0→1→2)</button>
     <button class="btn flip-btn" data-cat="light"      style="background:#2e2200;color:#fbbf24;">[L] Light</button>
     <button class="btn flip-btn" data-cat="distance"   style="background:#2e1515;color:#f87171;">[D] Distance</button>
     <button class="btn flip-btn" data-cat="background" style="background:#1f1535;color:#a78bfa;">[B] Background</button>
@@ -410,7 +454,7 @@ const logEl        = document.getElementById("log");
 const pendingNames = {};  // stem -> new_stem string
 
 const MAPS = {
-  item:       {"0":"Bird",      "1":"Drone"},
+  item:       {"0":"Bird", "1":"Drone", "2":"No Drone"},
   light:      {"0":"Bright",    "1":"Low"},
   distance:   {"0":"Close",     "1":"Far"},
   background: {"0":"Clear",     "1":"Cluttered"},
@@ -502,7 +546,7 @@ function flipCatInStem(s, cat) {
   const [iIdx, ldbIdx, sIdx] = numIdxs;
   const ldb = parts[ldbIdx].padStart(3, "0");
 
-  if      (cat === "item")       parts[iIdx]   = parts[iIdx]   === "0" ? "1" : "0";
+  if      (cat === "item")       parts[iIdx]   = {"0":"1","1":"2","2":"0"}[parts[iIdx]] ?? "0";
   else if (cat === "light")      parts[ldbIdx] = (ldb[0]==="0"?"1":"0") + ldb[1] + ldb[2];
   else if (cat === "distance")   parts[ldbIdx] = ldb[0] + (ldb[1]==="0"?"1":"0") + ldb[2];
   else if (cat === "background") parts[ldbIdx] = ldb[0] + ldb[1] + (ldb[2]==="0"?"1":"0");

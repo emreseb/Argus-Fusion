@@ -25,3 +25,4 @@ audit_progress*
 unmatched_report.txt
 .processed_log
 files_to_delete_V3*
+.vercel

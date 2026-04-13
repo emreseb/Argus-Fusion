@@ -2,11 +2,18 @@ import os
 import re
 import streamlit as st
 from PIL import Image, ImageDraw
+from pathlib import Path
 
 # --- Configuration ---
-# Hardcoded to your exact paths
-images_dir = "/home/emre/Desktop/DATASETv3/images" 
-labels_dir = "/home/emre/Desktop/DATASETv3/labels/obj_train_data" 
+DATASET_ROOT = os.environ.get("DATASET_ROOT", "")
+images_dir = os.environ.get(
+    "DATASET_IMAGES_DIR",
+    str(Path(DATASET_ROOT).expanduser() / "images") if DATASET_ROOT else "",
+)
+labels_dir = os.environ.get(
+    "DATASET_LABELS_DIR",
+    str(Path(DATASET_ROOT).expanduser() / "labels" / "obj_train_data") if DATASET_ROOT else "",
+)
 
 # --- Exact Mapping Logic from Previous Script ---
 def extract_key_and_frame(filename):
@@ -26,6 +33,8 @@ def get_sensor_type(root_path, filename):
 @st.cache_data
 def load_dataset():
     """Scans directories and returns a dictionary of valid Image/Label pairs."""
+    if not images_dir or not labels_dir:
+        return {}
     images_map = {}
     for root, _, files in os.walk(images_dir):
         for img_file in files:
@@ -93,7 +102,10 @@ st.title("🎯 YOLO Dataset Viewer")
 dataset = load_dataset()
 
 if not dataset:
-    st.error("No matching image/label pairs found. Check your paths!")
+    st.error(
+        "No matching image/label pairs found. Set `DATASET_ROOT` (or "
+        "`DATASET_IMAGES_DIR` and `DATASET_LABELS_DIR`) to your dataset paths."
+    )
 else:
     # 1. Group data for UI dropdowns
     sensors = sorted(list(set(k[0] for k in dataset.keys())))

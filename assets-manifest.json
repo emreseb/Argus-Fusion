@@ -1,0 +1,12 @@
+{
+  "images": [
+    { "src": "dataset_stats.png", "title": "Dataset stats" },
+    { "src": "dataset_stats_categories.png", "title": "Dataset stats (categories)" },
+    { "src": "dataset_stats_combos.png", "title": "Dataset stats (combos)" },
+    { "src": "plot1_categories.png", "title": "Plot 1: categories" },
+    { "src": "plot2_eo_ir_by_condition.png", "title": "Plot 2: EO/IR by condition" },
+    { "src": "plot3_frames_per_experiment.png", "title": "Plot 3: frames per experiment" },
+    { "src": "plot4_experiment_conditions.png", "title": "Plot 4: experiment conditions" }
+  ]
+}
+

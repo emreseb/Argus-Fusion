@@ -6,12 +6,20 @@ from PIL import Image, ImageDraw, ImageFont
 from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 import math
+from pathlib import Path
 
 # --- Configuration ---
-images_dir = "/Users/emre/Desktop/DATASETv3/images" 
-# Updated to the root labels folder based on our earlier fix!
-labels_dir = "/Users/emre/Desktop/DATASETv3/labels" 
-model_path = "best.pt"
+DATASET_ROOT = os.environ.get("DATASET_ROOT", "")
+images_dir = os.environ.get(
+    "DATASET_IMAGES_DIR",
+    str(Path(DATASET_ROOT).expanduser() / "images") if DATASET_ROOT else "",
+)
+# Labels directory should point at the folder containing YOLO `.txt` files
+labels_dir = os.environ.get(
+    "DATASET_LABELS_DIR",
+    str(Path(DATASET_ROOT).expanduser() / "labels") if DATASET_ROOT else "",
+)
+model_path = os.environ.get("MODEL_PATH", "best.pt")
 classNames = ["bird", "drone"]
 
 # --- Caching the Heavy Data & Models ---
@@ -20,11 +28,12 @@ classNames = ["bird", "drone"]
 def load_sahi_model():
     """Loads the SAHI model only once to prevent lag when moving the slider."""
     print("Loading SAHI Model into memory...")
+    device = os.environ.get("SAHI_DEVICE", "cpu")
     return AutoDetectionModel.from_pretrained(
         model_type='ultralytics',
         model_path=model_path,
         confidence_threshold=0.4,
-        device="mps" # Apple Silicon GPU
+        device=device,
     )
 
 def extract_key_and_frame(filename):
@@ -43,6 +52,8 @@ def get_sensor_type(root_path, filename):
 @st.cache_data
 def load_dataset():
     """Scans directories and pairs Images with their Ground Truth Labels."""
+    if not images_dir or not labels_dir:
+        return {}
     images_map = {}
     for root, _, files in os.walk(images_dir):
         for img_file in files:
@@ -141,7 +152,10 @@ st.title("🎯 YOLO + SAHI Dataset Evaluator")
 dataset = load_dataset()
 
 if not dataset:
-    st.error("No images found. Check your paths!")
+    st.error(
+        "No images found. Set `DATASET_ROOT` (or `DATASET_IMAGES_DIR` and "
+        "`DATASET_LABELS_DIR`) to your dataset paths."
+    )
 else:
     # Group data for UI dropdowns
     sensors = sorted(list(set(k[0] for k in dataset.keys())))

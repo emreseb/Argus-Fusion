@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DATASET-TOOLS</title>
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel-2: rgba(255, 255, 255, 0.1);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --accent: #a78bfa;
+        --accent2: #34d399;
+        --border: rgba(255, 255, 255, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 800px at 20% 0%, rgba(167, 139, 250, 0.24), transparent 55%),
+          radial-gradient(900px 700px at 90% 10%, rgba(52, 211, 153, 0.18), transparent 60%),
+          radial-gradient(700px 500px at 40% 85%, rgba(59, 130, 246, 0.14), transparent 55%),
+          var(--bg);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+        line-height: 1.45;
+      }
+      a { color: inherit; }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 20px 72px; }
+      header {
+        display: grid;
+        gap: 14px;
+        padding: 22px 20px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.05));
+        backdrop-filter: blur(10px);
+      }
+      h1 { margin: 0; font-size: 28px; letter-spacing: 0.2px; }
+      .sub { margin: 0; color: var(--muted); max-width: 72ch; }
+      .pillrow { display:flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+      .pill {
+        display:inline-flex; align-items:center; gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.06);
+        color: var(--muted);
+        font-size: 13px;
+        text-decoration: none;
+      }
+      .dot { width: 8px; height: 8px; border-radius: 99px; background: var(--accent); }
+      .dot.g { background: var(--accent2); }
+
+      .grid { margin-top: 18px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 16px 16px 14px;
+      }
+      .card h2 { margin: 0 0 8px; font-size: 16px; }
+      .card p { margin: 0; color: var(--muted); }
+      .steps { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
+      code, pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      pre {
+        margin: 10px 0 0;
+        padding: 12px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0,0,0,0.28);
+        overflow: auto;
+        color: rgba(255,255,255,0.86);
+      }
+      .gallery {
+        margin-top: 14px;
+        display:grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .imgcard {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255,255,255,0.03);
+        padding: 10px;
+      }
+      .imgcard img { width: 100%; height: auto; display:block; border-radius: 10px; }
+      .imgcap { margin-top: 8px; font-size: 12px; color: var(--muted); }
+      footer { margin-top: 18px; color: rgba(255,255,255,0.52); font-size: 12px; }
+      .warn {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        background: rgba(245, 158, 11, 0.08);
+        color: rgba(255,255,255,0.8);
+        font-size: 13px;
+      }
+      .loading { margin-top: 10px; color: rgba(255,255,255,0.6); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>DATASET-TOOLS</h1>
+        <p class="sub">
+          Lightweight project homepage deployed on Vercel to enable preview deployments and an always-on
+          reference for how to run the Python tools in this repo.
+        </p>
+        <div class="pillrow">
+          <span class="pill"><span class="dot"></span>Vercel: static dashboard + PR previews</span>
+          <span class="pill"><span class="dot g"></span>Apps: Streamlit viewers + Flask reviewer</span>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Run the interactive tools locally</h2>
+          <p>These apps expect your dataset paths via environment variables.</p>
+          <ol class="steps">
+            <li>Set <code>DATASET_ROOT</code> (or <code>DATASET_IMAGES_DIR</code> / <code>DATASET_LABELS_DIR</code>).</li>
+            <li>Install dependencies (Streamlit/SAHI/Flask as needed).</li>
+            <li>Run one of the entrypoints below.</li>
+          </ol>
+          <pre><code># Streamlit dataset viewer
+export DATASET_ROOT="/path/to/DATASETv3"
+python -m streamlit run view_all.py
+
+# Streamlit SAHI evaluator
+export DATASET_ROOT="/path/to/DATASETv3"
+export MODEL_PATH="/path/to/best.pt"
+export SAHI_DEVICE="cpu"   # or "mps"/"cuda"
+python -m streamlit run live/picture-inf-web-sahi.py
+
+# Flask reviewer (bit flipper)
+export DATASET_ROOT="/path/to/DATASETv3"
+python bit-flipper/bit-flipper.py</code></pre>
+          <div class="warn">
+            Note: Vercel won’t host these ML-heavy Python UIs as-is (they need local files + long-running
+            processes). Vercel is used here for the always-on project page + PR previews.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Repo visualizations</h2>
+          <p>Artifacts already tracked in the repo (useful for quick sharing/review).</p>
+          <div class="loading" id="viz-loading">Loading…</div>
+          <div class="gallery" id="viz-gallery"></div>
+        </section>
+      </div>
+
+      <footer>
+        Tip: connect this repo to Vercel, then every PR gets its own preview URL so teammates can review changes
+        without running anything locally.
+      </footer>
+    </div>
+    <script>
+      const loadingEl = document.getElementById("viz-loading");
+      const galleryEl = document.getElementById("viz-gallery");
+
+      function addCard(src, title) {
+        const wrap = document.createElement("div");
+        wrap.className = "imgcard";
+        const img = document.createElement("img");
+        img.src = "./" + src;
+        img.alt = title || src;
+        img.loading = "lazy";
+        const cap = document.createElement("div");
+        cap.className = "imgcap";
+        cap.textContent = title ? `${title} — ${src}` : src;
+        wrap.appendChild(img);
+        wrap.appendChild(cap);
+        galleryEl.appendChild(wrap);
+      }
+
+      async function loadManifest() {
+        const res = await fetch("./assets-manifest.json", { cache: "no-cache" });
+        if (!res.ok) throw new Error("manifest fetch failed");
+        const data = await res.json();
+        const imgs = Array.isArray(data.images) ? data.images : [];
+        imgs.forEach((it) => addCard(it.src, it.title));
+        loadingEl.style.display = imgs.length ? "none" : "block";
+        if (!imgs.length) loadingEl.textContent = "No images in manifest.";
+      }
+
+      loadManifest().catch(() => {
+        loadingEl.textContent = "Could not load assets-manifest.json";
+      });
+    </script>
+  </body>
+</html>
+

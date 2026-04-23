@@ -17,8 +17,15 @@ from datetime import datetime
 from flask import Flask, render_template_string, jsonify, request, send_file
 
 # ── Config ─────────────────────────────────────────────────────────────────────
-IMAGES_DIR   = "/home/emre/Desktop/NATO/DATASETv3/images(all)"
-LABELS_DIR   = "/home/emre/Desktop/NATO/DATASETv3/labels(removed empty txts)/obj_train_data"
+DATASET_ROOT = os.environ.get("DATASET_ROOT", "")
+IMAGES_DIR = os.environ.get(
+    "DATASET_IMAGES_DIR",
+    str(Path(DATASET_ROOT).expanduser() / "images") if DATASET_ROOT else "",
+)
+LABELS_DIR = os.environ.get(
+    "DATASET_LABELS_DIR",
+    str(Path(DATASET_ROOT).expanduser() / "labels" / "obj_train_data") if DATASET_ROOT else "",
+)
 HISTORY_FILE = "rename_history.json"
 # ───────────────────────────────────────────────────────────────────────────────
 
@@ -61,6 +68,8 @@ def extract_experiment_code(filename: str) -> str:
 
 
 def get_images(experiment_filter: str = "ALL") -> list[Path]:
+    if not IMAGES_DIR:
+        return []
     exts = {".jpg", ".jpeg", ".png"}
     imgs = sorted(
         p for p in Path(IMAGES_DIR).iterdir()
@@ -129,6 +138,8 @@ def images_list():
 
 @app.route("/image/<filename>")
 def serve_image(filename):
+    if not IMAGES_DIR:
+        return "DATASET_IMAGES_DIR not set", 400
     path = Path(IMAGES_DIR) / filename
     if not path.exists():
         return "Not found", 404
@@ -283,7 +294,7 @@ def commit():
 
 # ── HTML ────────────────────────────────────────────────────────────────────────
 
-HTML_TEMPLATE = """
+HTML_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="en">
 <head>

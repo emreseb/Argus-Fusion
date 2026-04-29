@@ -1670,9 +1670,9 @@
     "is_twin": false
   },
   "1_001_1_E19_frame000024": {
-    "new_stem": "1_000_1_E19_frame000024",
-    "timestamp": "2026-04-08T22:40:35",
-    "is_twin": true
+    "new_stem": "2_000_1_E19_frame000024",
+    "timestamp": "2026-04-29T11:24:32",
+    "is_twin": false
   },
   "1_001_0_E19_frame000025": {
     "new_stem": "1_000_0_E19_frame000025",
@@ -1680,9 +1680,9 @@
     "is_twin": false
   },
   "1_001_1_E19_frame000025": {
-    "new_stem": "1_000_1_E19_frame000025",
-    "timestamp": "2026-04-08T22:40:35",
-    "is_twin": true
+    "new_stem": "2_000_1_E19_frame000025",
+    "timestamp": "2026-04-29T11:24:32",
+    "is_twin": false
   },
   "1_001_0_E20_frame000000": {
     "new_stem": "1_000_0_E20_frame000000",

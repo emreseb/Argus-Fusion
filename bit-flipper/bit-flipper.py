@@ -179,24 +179,51 @@ def find_twin(original_stem: str, new_stem: str) -> tuple[str, str] | None:
     if len(num_idxs) < 3:
         return None
 
-    s_idx     = num_idxs[2]
+    i_idx, ldb_idx, s_idx = num_idxs[0], num_idxs[1], num_idxs[2]
     current_s = parts[s_idx]
     twin_s    = "1" if current_s == "0" else "0"
 
-    twin_parts        = parts[:]
-    twin_parts[s_idx] = twin_s
-    twin_orig_stem    = "_".join(twin_parts)
+    # 1. Locate the twin's original stem
+    twin_orig_stem = None
+    twin_parts_found = None
 
-    new_parts         = new_stem.split("_")
-    twin_new_parts    = new_parts[:]
-    twin_new_parts[s_idx] = twin_s
-    twin_new_stem     = "_".join(twin_new_parts)
+    # The twin might have a diverged Item bit (0, 1, or 2) from past independent flips.
+    # Check all possible Item bits to find the existing twin.
+    for potential_item in ["0", "1", "2"]:
+        test_parts = parts[:]
+        test_parts[i_idx] = potential_item
+        test_parts[s_idx] = twin_s
+        test_stem = "_".join(test_parts)
 
-    for ext in (".jpg", ".jpeg", ".png"):
-        if (Path(IMAGES_DIR) / (twin_orig_stem + ext)).exists():
-            return twin_orig_stem, twin_new_stem
+        for ext in (".jpg", ".jpeg", ".png"):
+            if (Path(IMAGES_DIR) / (test_stem + ext)).exists():
+                twin_orig_stem = test_stem
+                twin_parts_found = test_parts
+                break
+        if twin_orig_stem:
+            break
 
-    return None
+    if not twin_orig_stem:
+        return None
+
+    # 2. Compute the twin's new stem based on L, D, B, S changes ONLY
+    new_parts = new_stem.split("_")
+    twin_new_parts = twin_parts_found[:]
+
+    # Apply Light, Distance, Background changes
+    twin_new_parts[ldb_idx] = new_parts[ldb_idx]
+
+    # Apply Sensor change (twin's new sensor is always opposite of the selected file's new sensor)
+    twin_new_parts[s_idx] = "1" if new_parts[s_idx] == "0" else "0"
+
+    twin_new_stem = "_".join(twin_new_parts)
+
+    # 3. If only the Item category was flipped, the twin's calculated new stem 
+    # will exactly match its current stem. We return None to safely skip it.
+    if twin_orig_stem == twin_new_stem:
+        return None
+
+    return twin_orig_stem, twin_new_stem
 
 
 def rename_file_and_label(
@@ -653,4 +680,4 @@ if __name__ == "__main__":
     print(f"  Images  : {IMAGES_DIR}")
     print(f"  Labels  : {LABELS_DIR}")
     print(f"  History : {Path(HISTORY_FILE).resolve()}")
-    app.run(host="0.0.0.0", debug=False, port=5000)
+    app.run(host="127.0.0.1", debug=False, port=5000)

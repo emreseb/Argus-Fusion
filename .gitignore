@@ -16,6 +16,7 @@ datasetf_output/
 *.pt
 *.jpg
 *.png
+*.json
 
 # Virtual Environments
 venv/

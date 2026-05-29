@@ -1,44 +1,43 @@
 from ultralytics import YOLO
 from pathlib import Path
 import torch
-#NEEDS CUDA
-model = YOLO("yolo11m.pt")
 
-# This is the path to my YAML relative to my CWD
-rel_path = "/users/home/aiproject/ProjectAi4Cuav/REPO/DATASET-TOOLS/overfit_dataset.yaml"
+# 1. HAYAT KURTARAN TAVSİYE: yolo11m (Medium) laptopları çok zorlar. 
+# Eğer VRAM'in 6GB veya altındaysa bunu kesinlikle "yolo11s.pt" (Small) veya "yolo11n.pt" (Nano) yap!
+model = YOLO("yolo11s.pt")
 
-# This file _does_ exist
-assert Path(rel_path).exists(), "File doesn't exist"
+yaml_path = "/home/emre/Desktop/NATO/code/yaml-files/eo-model.yaml"
 
-# This is fixed by using the _full_ path
+assert Path(yaml_path).exists(), "File doesn't exist"
+full_path = Path(yaml_path).resolve()
 
-full_path = Path(rel_path).resolve()
-if torch.cuda.is_available()==True:
+if torch.cuda.is_available():
     try:
-
         model.train(
-        data=str(full_path), 
-        epochs=300,           # Set to 300 as requested
-        imgsz=1024,          # INCREASED: Drone objects are small; 640 often loses them. L40 can handle 1024.
-        batch=32,            # FIXED: -1 is okay, but 32 is a "sweet spot" for L40 with 1024px images.
-        device=0,            # Use index 0 for a single GPU
-        patience=50,         # Keeps your "early stop" safety net
-        save=True,
-        cache='ram',         # L40 systems usually have high RAM; 'ram' is faster than 'disk'
-        optimizer='AdamW',   # Better for fine-tuning and modern YOLO versions than 'auto'
-        lr0=0.01,            # Standard starting point
-        cos_lr=True,         # Use Cosine Learning Rate scheduler (better for 300 epochs)
-        mosaic=1.0,          # CRITICAL for drone data (combines 4 images to help with small objects)
-        mixup=0.1,           # Adds some robustness to occlusion
-        amp=True             # Automatic Mixed Precision (faster, uses less VRAM)
-)
+            data=str(full_path), 
+            epochs=300,           
+            imgsz=640,           # Dronelar küçük olsa da laptop için 1024 hayal. 640 iyi, patlarsa 512'ye düşür.
+            batch=-1,             # LAPTOP KORUMASI: VRAM dolup taşmasın diye 4'e çektik (veya -1 yapıp AutoBatch dene).
+            workers=2,           # LAPTOP KORUMASI (KRİTİK): İşlemcin %100 olup yanmasın diye data loader iş parçacığını kıstık.
+            device=0,            
+            patience=50,         
+            save=True,
+            cache=False,         # LAPTOP KORUMASI: 'ram' yaparsan 16GB/32GB RAM'ini sömürüp PC'yi dondurabilir. False kalsın.
+            optimizer='AdamW',   
+            lr0=0.01,            
+            cos_lr=True,         
+            mosaic=1.0,          # Dronelar için kalsın.
+            mixup=0.0,           # LAPTOP KORUMASI: Mixup ekstra hesaplama yükü bindirir, laptopta kapalı (0.0) kalması daha serin tutar.
+            amp=True             # BU KESİNLİKLE KALSIN: Hem hızı artırır hem GPU'yu rahatlatır.
+        )
+        
+        # Eğitimin başarılı olursa test etmesi için içeri aldık
+        results = model.val()  
+        print(results.metrics)  
+        
     except RuntimeError as e:
-        print(f"Somehting went wrong :/. this specifically -> {e}")
-    else:
-        print("you broke your cuda AHAHAHAHAH")
-    
-results = model.val()  # runs evaluation on the validation split
-print(results.metrics)  # shows precision, recall, mAP50, mAP50-95
-
-
- 
+        print(f"Bir şeyler ters gitti baboli :/ Hata şu -> {e}")
+        
+else:
+    # Cuda yoksa CPU ile eğitmeye kalkar, asıl o zaman laptop yanar!
+    print("CUDA bulunamadı! Eğer CPU ile eğitime başlarsan laptop erir, aman diyeyim.")

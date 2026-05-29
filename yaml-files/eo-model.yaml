@@ -1,0 +1,15 @@
+# 1. Dataset Root Directory (Optional but highly recommended)
+path: /home/emre/Desktop/NATO/DATASETv3/training-eo-ir-seperated/EO-train-test
+
+# 2. Train, Val, and Test Split Paths (Relative to 'path' above)
+train: images/train
+val: images/val
+test: images/test
+
+# 3. Number of Classes
+nc: 2
+
+# 4. Class Names (Must match the order of your class IDs: 0, 1, 2...)
+names:
+  0: drone
+  1: bird

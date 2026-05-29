@@ -20,7 +20,7 @@ Example: 1_001_0_ERF2_frame000032
 """
 
 CATEGORY_CONFIGS = [
-    ("Item",       {"0": "Bird",      "1": "Drone"    }, ["#378ADD", "#1D9E75"]),
+    ("Item",       {"0": "Bird",      "1": "Drone", "2": "No Drone"    }, ["#378ADD", "#1D9E75"]),
     ("Light",      {"0": "Bright",    "1": "Low"      }, ["#EF9F27", "#534AB7"]),
     ("Distance",   {"0": "Close",     "1": "Far"      }, ["#D85A30", "#0F6E56"]),
     ("Background", {"0": "Clear",     "1": "Cluttered"}, ["#888780", "#D4537E"]),
@@ -123,7 +123,7 @@ def plot_stats(counts, output_path="dataset_stats.png"):
 
 
 def main():
-    base_dir = "/home/emre/Desktop/NATO/DATASETv3/fully_paired_annotated/images"
+    base_dir = "/home/emre/Desktop/NATO/DATASETv3/images(all)"
     counts, warnings = count_files_by_category(base_dir)
 
     print("Dataset Statistics:")

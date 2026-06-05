@@ -6,7 +6,7 @@ import torch
 # Eğer VRAM'in 6GB veya altındaysa bunu kesinlikle "yolo11s.pt" (Small) veya "yolo11n.pt" (Nano) yap!
 model = YOLO("yolo11s.pt")
 
-yaml_path = "/home/emre/Desktop/NATO/code/yaml-files/eo-model.yaml"
+yaml_path = "/home/emre/Desktop/NATO/code/yaml-files/ir-model.yaml"
 
 assert Path(yaml_path).exists(), "File doesn't exist"
 full_path = Path(yaml_path).resolve()
@@ -15,14 +15,14 @@ if torch.cuda.is_available():
     try:
         model.train(
             data=str(full_path), 
-            epochs=300,           
-            imgsz=640,           # Dronelar küçük olsa da laptop için 1024 hayal. 640 iyi, patlarsa 512'ye düşür.
-            batch=-1,             # LAPTOP KORUMASI: VRAM dolup taşmasın diye 4'e çektik (veya -1 yapıp AutoBatch dene).
-            workers=2,           # LAPTOP KORUMASI (KRİTİK): İşlemcin %100 olup yanmasın diye data loader iş parçacığını kıstık.
+            epochs=150,           
+            imgsz=640,           
+            batch=-1,             #VRAM dolup taşmasın diye 4'e çektik (veya -1 yapıp AutoBatch dene).
+            workers=2,           
             device=0,            
             patience=50,         
             save=True,
-            cache=False,         # LAPTOP KORUMASI: 'ram' yaparsan 16GB/32GB RAM'ini sömürüp PC'yi dondurabilir. False kalsın.
+            cache=False,         
             optimizer='AdamW',   
             lr0=0.01,            
             cos_lr=True,         

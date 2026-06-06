@@ -1,71 +1,43 @@
 # DATASET-TOOLS
 
-This repository is primarily a set of Python utilities for dataset auditing, visualization, labeling/review, and model-inference helpers.
+A collection of Python tools for building, inspecting, and evaluating object-detection datasets (YOLO format, with EO/IR imagery).
 
-## What’s “online” on Vercel
+## What it's for
 
-This repo includes a small static homepage (`index.html`) and `vercel.json` so you can connect the repo to Vercel and get:
+This repository gathers the scripts used to take raw images and labels and turn them into a clean, trainable dataset — and to train and check models on it. The main jobs it handles:
 
-- **A stable project homepage** (quick links + run instructions)
-- **Preview deployments for every PR**, which makes collaboration/review much easier
+- **Viewing** images alongside their YOLO labels to spot-check the data.
+- **Reviewing / fixing labels** — flipping, correcting, and cleaning annotations.
+- **Dataset stats** — counting classes, conditions, and experiments, and plotting them.
+- **Splitting** data into train/val sets.
+- **Training** YOLO models (CPU/GPU trainers and configs in `yaml-files/`).
+- **Inference & evaluation** — running models on images, including tiled (SAHI) inference.
 
-Important: the interactive Python apps in this repo (Streamlit + Flask) are meant to run **locally** (or on a Python-native host). They depend on access to your dataset files on disk and, in some cases, ML dependencies that aren’t a good fit for Vercel’s serverless runtime.
+## Layout
 
-## Local development (Python tools)
+| Path | Purpose |
+|------|---------|
+| `view_all.py` | Streamlit viewer for images + labels |
+| `bit-flipper/` | Flask tool for reviewing and fixing labels |
+| `trainers/` | YOLO training scripts |
+| `live/` | Inference tools (incl. SAHI tiled inference) |
+| `model-eval/` | Model evaluation scripts |
+| `yaml-files/` | Dataset/training configs |
+| `CVAT-Stats/` | Dataset statistics and plots |
 
-### Required environment variables
+## Running the tools
 
-Most interactive tools now use environment variables instead of hardcoded machine paths.
+Most tools read your dataset from environment variables instead of hardcoded paths:
 
-- Copy `.env.example` to `.env` (optional) and export variables in your shell.
+- `DATASET_ROOT` — dataset root (expects `images/` and `labels/` underneath)
+- `MODEL_PATH` — path to a YOLO model (for inference/eval)
+- `SAHI_DEVICE` — `cpu` (default), `mps`, or `cuda`
 
-- **`DATASET_ROOT`**: root directory of your dataset (expects `images/` and `labels/` under it), or set the two vars below.
-- **`DATASET_IMAGES_DIR`**: folder containing images.
-- **`DATASET_LABELS_DIR`**: folder containing YOLO label `.txt` files (often `labels/obj_train_data`).
-
-Optional:
-
-- **`MODEL_PATH`**: path to a YOLO model (used by SAHI evaluator).
-- **`SAHI_DEVICE`**: `"cpu"` (default), `"mps"`, or `"cuda"` depending on your machine.
-
-### Streamlit: dataset viewer
+Example:
 
 ```bash
-export DATASET_ROOT="/path/to/DATASETv3"
+export DATASET_ROOT="/path/to/dataset"
 python -m streamlit run view_all.py
 ```
 
-### Streamlit: SAHI evaluator
-
-```bash
-export DATASET_ROOT="/path/to/DATASETv3"
-export MODEL_PATH="/path/to/best.pt"
-export SAHI_DEVICE="cpu"
-python -m streamlit run live/picture-inf-web-sahi.py
-```
-
-### Flask: dataset reviewer (bit flipper)
-
-```bash
-export DATASET_ROOT="/path/to/DATASETv3"
-python bit-flipper/bit-flipper.py
-```
-
-## Deploy to Vercel (team collaboration)
-
-### One-time setup
-
-1. Import the Git repo into Vercel.
-2. Vercel will auto-detect this as a static site (served from `index.html`).
-
-### Recommended workflow for a team
-
-- **PRs for all changes**: Vercel automatically creates a **Preview Deployment** per PR.
-- **Link PR → preview URL**: reviewers can open the preview without running anything.
-- **Use env vars in scripts**: avoid hardcoded paths so teammates can run tools locally.
-
-## Notes / limitations
-
-- The repo does **not** currently include the dataset images/labels in git (by design). The interactive apps will show “no images found” until you point them at a local dataset path using the env vars above.
-- If you want the interactive apps “online”, the usual approach is to host them on a Python-native platform (e.g., Streamlit Community Cloud / Render / a small VM) and keep Vercel for the landing page + previews.
-
+The dataset images and labels are **not** stored in git — point the tools at a local copy using the variables above.

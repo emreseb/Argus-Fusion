@@ -1,0 +1,141 @@
+<mxfile host="app.diagrams.net" agent="Claude Code">
+  <diagram name="Fusion-Pipeline" id="fusionPipelineDetailed">
+    <mxGraphModel dx="1329" dy="609" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="eoFootage" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="EO footage&#xa;(visible / human-eye)" vertex="1">
+          <mxGeometry height="60" width="160" x="180" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="irFootage" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="IR footage&#xa;(thermal)" vertex="1">
+          <mxGeometry height="60" width="160" x="760" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sync" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Sync&#xa;timestamp-pair EO &amp; IR frames&#xa;(resize to a common size&#xa;only if resolutions differ;&#xa;no warping)" vertex="1">
+          <mxGeometry height="80" width="240" x="430" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="bright" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Mean-pixel brightness check (EO only)&#xa;meanV = mean( HSV V-channel ),  EMA-smoothed&#xa;[ reuses brighntess/day_night.py ]" vertex="1">
+          <mxGeometry height="70" width="320" x="120" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="regime" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="meanV vs&#xa;T_low / T_high ?" vertex="1">
+          <mxGeometry height="100" width="160" x="200" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="params" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=10;" value="Active parameter set (per regime: DAY / TWILIGHT / NIGHT)&#xa;• modality weights  a_EO , a_IR&#xa;• per-model confidence thresholds&#xa;• EO preprocessing (gamma / CLAHE in low light)&#xa;• association IoU, agreement bonus, lonely penalty" vertex="1">
+          <mxGeometry height="120" width="400" x="470" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="eoModel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="EO model&#xa;sliced YOLO inference&#xa;conf = conf_thresh_EO&#xa;[ live/picture_inference_SAHI.py ]" vertex="1">
+          <mxGeometry height="80" width="240" x="120" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="irModel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="IR model&#xa;sliced YOLO inference&#xa;conf = conf_thresh_IR&#xa;[ live/picture_inference_SAHI.py ]" vertex="1">
+          <mxGeometry height="80" width="240" x="740" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="eoDets" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;" value="EO detections&#xa;(boxes + conf, EO frame)" vertex="1">
+          <mxGeometry height="50" width="200" x="140" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="irDets" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;dashed=1;" value="IR detections&#xa;(boxes + conf, IR frame)" vertex="1">
+          <mxGeometry height="50" width="200" x="760" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="noreg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;dashed=1;fontStyle=2;" value="No spatial alignment&#xa;EO &amp; IR assumed co-boresighted&#xa;(shared image frame) → boxes compared directly" vertex="1">
+          <mxGeometry height="60" width="320" x="700" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="dlTitle" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontStyle=1;align=center;spacingTop=8;" value="DECISION LOGIC  (late / detection-level fusion — all boxes now in EO frame)" vertex="1">
+          <mxGeometry height="220" width="860" x="120" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="dlAssoc" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="1. Associate&#xa;match EO ↔ IR boxes&#xa;by IoU ≥ assoc_iou&#xa;→ agreement / EO-only / IR-only" vertex="1">
+          <mxGeometry height="120" width="240" x="150" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="dlWbf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="2. Fuse box (WBF)&#xa;Weighted Box Fusion:&#xa;box = Σ(w·box) / Σw ,&#xa;w = a_modality · conf" vertex="1">
+          <mxGeometry height="120" width="240" x="430" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="dlConf" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="3. Fuse confidence&#xa;noisy-OR: 1 - Π(1 - a_s·conf_s)&#xa;+ agreement bonus&#xa;- lonely penalty&#xa;keep if ≥ decision_threshold" vertex="1">
+          <mxGeometry height="120" width="240" x="710" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="decided" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="Decided bounding box + fused confidence&#xa;(this frame)" vertex="1">
+          <mxGeometry height="60" width="360" x="370" y="1190" as="geometry" />
+        </mxCell>
+        <mxCell id="prev" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f5f5f5;strokeColor=#666666;" value="Previous results&#xa;(track history buffer)" vertex="1">
+          <mxGeometry height="90" width="150" x="120" y="1330" as="geometry" />
+        </mxCell>
+        <mxCell id="traj" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Trajectory Analysis&#xa;constant-velocity Kalman filter [cx,cy,w,h,vx,vy]&#xa;gating + confirm / delete (suppress 1-frame false positives)" vertex="1">
+          <mxGeometry height="100" width="420" x="370" y="1320" as="geometry" />
+        </mxCell>
+        <mxCell id="output" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="Confirmed track output&#xa;smoothed bbox + velocity + stable ID + track confidence" vertex="1">
+          <mxGeometry height="60" width="420" x="370" y="1480" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="eoFootage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="sync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="irFootage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="sync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="sync" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="bright" value="EO frame">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="bright" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="regime">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="regime" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="params" value="selects">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="regime" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="eoModel" value="EO frame">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="sync" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="irModel" value="IR frame">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="params" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="irModel" value="params">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8b" edge="1" parent="1" source="params" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;" target="eoModel" value="params">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="460" />
+              <mxPoint x="450" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="eoModel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="eoDets">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="irModel" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="irDets">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="irDets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#999999;" target="noreg">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="eoDets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="dlAssoc" value="EO boxes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="noreg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="dlAssoc" value="IR boxes (same frame)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="dlAssoc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="dlWbf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="dlWbf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="dlConf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="dlConf" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="decided">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" edge="1" parent="1" source="decided" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="traj">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" edge="1" parent="1" source="prev" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="traj" value="concatenate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e19" edge="1" parent="1" source="traj" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="output">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" edge="1" parent="1" source="traj" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="prev" value="append">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e21" edge="1" parent="1" source="traj" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="dlConf" value="optional: predicted-position prior">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#999999;align=left;spacingLeft=10;fontSize=11;" value="Legend:  blue = EO path   |   red = IR path   |   yellow = brightness/regime   |   orange = parameters   |   green = fused / trajectory   |   grey dashed = skipped step&#xa;[ bracketed ] = existing repo file reused.   Late fusion, no spatial alignment (sensors co-boresighted)." vertex="1">
+          <mxGeometry height="50" width="860" x="120" y="1580" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,11 @@
+# EO/IR fusion pipeline dependencies.
+#
+# The pure logic (schema, fusion math, Kalman tracking, regime classification)
+# needs only numpy — see fusion/demo_synthetic.py, which runs with just this:
+numpy>=1.24
+
+# The real inference + visualisation path additionally needs:
+opencv-python>=4.8.0     # frame I/O, HSV brightness, CLAHE/gamma, drawing
+ultralytics>=8.1.0       # YOLO backend (EO/IR weights)
+sahi>=0.11.18            # sliced inference for small targets
+torch>=2.0               # pulled in by ultralytics; CUDA/MPS auto-detected

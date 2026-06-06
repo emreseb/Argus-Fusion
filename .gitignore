@@ -13,10 +13,14 @@ bestmodels/
 archive/
 datasetf_output/
 .DS_Store
+
 *.pt
 *.jpg
 *.png
 *.json
+*.deb
+*.html
+
 
 # Virtual Environments
 venv/

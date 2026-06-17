@@ -13,7 +13,8 @@ installed; you only need the ML stack when you actually call ``process_frame``.
 from __future__ import annotations
 
 from .config import PipelineConfig
-from .fusion import associate, decision_logic, iou, noisy_or, wbf
+from .fusion import associate, decision_logic, fuse_box, iou, noisy_or, wbf
+from .fuzzy_trust import FuzzyTrust, FuzzyTrustConfig, box_long_side, load_fuzzy_config
 from .params import (
     DEFAULT_PARAMS,
     DEFAULT_T_HIGH,
@@ -24,6 +25,7 @@ from .params import (
 )
 from .pipeline import FrameResult, FusionPipeline
 from .regime import RegimeEstimator, classify_regime, mean_brightness_v
+from .registration import AutoRegistrar, RegistrationConfig
 from .schema import Detection, FusedDetection
 from .tracking import KalmanBoxTracker, Track, Tracker
 
@@ -42,11 +44,18 @@ __all__ = [
     "RegimeEstimator",
     "classify_regime",
     "mean_brightness_v",
+    "AutoRegistrar",
+    "RegistrationConfig",
     "iou",
     "associate",
     "wbf",
+    "fuse_box",
     "noisy_or",
     "decision_logic",
+    "FuzzyTrust",
+    "FuzzyTrustConfig",
+    "box_long_side",
+    "load_fuzzy_config",
     "KalmanBoxTracker",
     "Track",
     "Tracker",

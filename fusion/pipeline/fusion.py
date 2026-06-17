@@ -16,8 +16,9 @@ import numpy as np
 
 from .params import RegimeParams, Regime
 from .schema import Detection, FusedDetection
+from .fuzzy_trust import FuzzyTrust, box_long_side
 
-__all__ = ["iou", "associate", "wbf", "noisy_or", "decision_logic"]
+__all__ = ["iou", "associate", "wbf", "fuse_box", "noisy_or", "decision_logic"]
 
 
 def iou(box_a, box_b) -> float:
@@ -84,19 +85,61 @@ def associate(
     return pairs, eo_only, ir_only
 
 
-def wbf(eo_det: Detection, ir_det: Detection, params: RegimeParams) -> np.ndarray:
+def wbf(
+    eo_det: Detection,
+    ir_det: Detection,
+    params: Optional[RegimeParams] = None,
+    weights: Optional[Tuple[float, float]] = None,
+) -> np.ndarray:
     """Weighted Box Fusion of an agreement pair (plan §3.2).
 
     The decided box is the confidence-and-modality-weighted average of the two
-    corner sets — more stable than NMS, which would throw one box away.
+    corner sets — more stable than NMS, which would throw one box away. The
+    modality weights come from ``weights=(w_eo, w_ir)`` when given (e.g. from the
+    fuzzy trust engine), otherwise from the regime ``params`` table.
     """
-    w_eo = params.modality_weight_EO * eo_det.conf
-    w_ir = params.modality_weight_IR * ir_det.conf
+    if weights is not None:
+        w_eo_mod, w_ir_mod = weights
+    elif params is not None:
+        w_eo_mod, w_ir_mod = params.modality_weight_EO, params.modality_weight_IR
+    else:
+        raise ValueError("wbf needs either params or weights")
+    w_eo = w_eo_mod * eo_det.conf
+    w_ir = w_ir_mod * ir_det.conf
     total = w_eo + w_ir
     if total <= 0.0:
         # Degenerate (both zero weight): fall back to a plain average.
         return (eo_det.bbox_xyxy + ir_det.bbox_xyxy) / 2.0
     return (w_eo * eo_det.bbox_xyxy + w_ir * ir_det.bbox_xyxy) / total
+
+
+def fuse_box(
+    eo_det: Detection,
+    ir_det: Detection,
+    weights: Tuple[float, float],
+    box_mode: str = "wbf",
+) -> np.ndarray:
+    """Decide an agreement pair's box.
+
+    - ``"wbf"`` (default): the trust/confidence-weighted average of both corner
+      sets (see :func:`wbf`) — the plan §3.2 behaviour.
+    - ``"select"``: keep the box of the **higher-weighted** sensor verbatim; the
+      other sensor still contributes *confidence* (noisy-OR) but not geometry.
+      This stops a low-trust box from dragging a high-trust one off-target, which
+      otherwise hurts tight-IoU localisation (AP75) and can turn a good box into
+      a miss.
+
+    The winner is chosen from the same ``weights`` (``w_eo * conf`` vs
+    ``w_ir * conf``), so selection follows the trust dial: nothing here assumes a
+    particular sensor is better — give EO more trust (e.g. a stronger EO model)
+    and the EO box wins automatically.
+    """
+    if box_mode == "select":
+        w_eo_mod, w_ir_mod = weights
+        w_eo = w_eo_mod * eo_det.conf
+        w_ir = w_ir_mod * ir_det.conf
+        return eo_det.bbox_xyxy if w_eo >= w_ir else ir_det.bbox_xyxy
+    return wbf(eo_det, ir_det, weights=weights)
 
 
 def noisy_or(*probs: float) -> float:
@@ -111,11 +154,34 @@ def noisy_or(*probs: float) -> float:
     return 1.0 - keep
 
 
-def _winning_class(eo_det: Detection, ir_det: Detection, params: RegimeParams) -> int:
+def _winning_class(
+    eo_det: Detection, ir_det: Detection, w_eo_mod: float, w_ir_mod: float
+) -> int:
     """Class id of the more strongly-weighted sensor in an agreement pair."""
-    w_eo = params.modality_weight_EO * eo_det.conf
-    w_ir = params.modality_weight_IR * ir_det.conf
+    w_eo = w_eo_mod * eo_det.conf
+    w_ir = w_ir_mod * ir_det.conf
     return eo_det.class_id if w_eo >= w_ir else ir_det.class_id
+
+
+def _modality_weights(
+    size_px: Optional[float],
+    params: RegimeParams,
+    fuzzy: Optional[FuzzyTrust],
+    brightness: Optional[float],
+) -> Tuple[float, float]:
+    """Return ``(modality_weight_EO, modality_weight_IR)`` for one context.
+
+    With a :class:`FuzzyTrust` engine **and** a brightness reading, the weights
+    come from the smooth, size-aware trust dial (``fuzzy_trust.py``): darker or
+    smaller targets lean on IR, bright/large targets on EO, blended without the
+    table's hard regime switch. Otherwise they fall back to the fixed per-regime
+    table (``params.modality_weight_*``). Either way the rest of the decision
+    logic — agreement bonus, lonely penalties, threshold — is identical, so this
+    is a drop-in swap of just the weighting.
+    """
+    if fuzzy is not None and brightness is not None:
+        return fuzzy.weights(brightness, size_px)
+    return params.modality_weight_EO, params.modality_weight_IR
 
 
 def _apply_prior(
@@ -146,11 +212,23 @@ def decision_logic(
     prior_iou_gate: float = 0.3,
     prior_bonus: float = 0.15,
     no_prior_penalty: float = 0.20,
+    fuzzy: Optional[FuzzyTrust] = None,
+    brightness: Optional[float] = None,
+    box_mode: str = "wbf",
 ) -> List[FusedDetection]:
-    """Run associate -> WBF -> noisy-OR -> adjustments -> threshold (plan §3.3, §7).
+    """Run associate -> fuse box -> noisy-OR -> adjustments -> threshold (plan §3.3, §7).
 
     ``priors`` (predicted track boxes) enables the optional trajectory feedback
     of plan §5; leave it ``None`` to reproduce the plan's §7 pseudocode exactly.
+
+    ``fuzzy`` + ``brightness`` opt into the fuzzy sensor-trust engine: when both
+    are supplied, the EO/IR modality weights are computed per detection from the
+    (EMA-smoothed) ``brightness`` and the target's box size instead of the fixed
+    per-regime table. Leave either ``None`` for the original table behaviour.
+
+    ``box_mode`` selects how an agreement pair's box is decided (see
+    :func:`fuse_box`): ``"wbf"`` averages both boxes (default), ``"select"``
+    keeps the higher-trust sensor's box and uses the other only for confidence.
     """
     regime_name = regime.value if isinstance(regime, Regime) else str(regime)
     pairs, eo_only, ir_only = associate(
@@ -161,11 +239,10 @@ def decision_logic(
 
     # Agreement pairs — both sensors fired and overlapped.
     for e, r in pairs:
-        box = wbf(e, r, params)
-        conf = noisy_or(
-            params.modality_weight_EO * e.conf,
-            params.modality_weight_IR * r.conf,
-        )
+        size = 0.5 * (box_long_side(e.bbox_xyxy) + box_long_side(r.bbox_xyxy))
+        w_eo_mod, w_ir_mod = _modality_weights(size, params, fuzzy, brightness)
+        box = fuse_box(e, r, (w_eo_mod, w_ir_mod), box_mode)
+        conf = noisy_or(w_eo_mod * e.conf, w_ir_mod * r.conf)
         conf = min(1.0, conf * (1.0 + params.agreement_bonus))  # agreement bonus
         conf = _apply_prior(box, conf, priors, prior_iou_gate, prior_bonus, no_prior_penalty)
         out.append(
@@ -174,13 +251,14 @@ def decision_logic(
                 conf=conf,
                 support=["EO", "IR"],
                 regime=regime_name,
-                class_id=_winning_class(e, r, params),
+                class_id=_winning_class(e, r, w_eo_mod, w_ir_mod),
             )
         )
 
     # EO-only — discounted by the regime's EO lonely penalty.
     for e in eo_only:
-        conf = params.modality_weight_EO * e.conf * (1.0 - params.lonely_penalty_EO)
+        w_eo_mod, _ = _modality_weights(box_long_side(e.bbox_xyxy), params, fuzzy, brightness)
+        conf = w_eo_mod * e.conf * (1.0 - params.lonely_penalty_EO)
         conf = _apply_prior(e.bbox_xyxy, conf, priors, prior_iou_gate, prior_bonus, no_prior_penalty)
         out.append(
             FusedDetection(
@@ -194,7 +272,8 @@ def decision_logic(
 
     # IR-only — discounted by the regime's IR lonely penalty.
     for r in ir_only:
-        conf = params.modality_weight_IR * r.conf * (1.0 - params.lonely_penalty_IR)
+        _, w_ir_mod = _modality_weights(box_long_side(r.bbox_xyxy), params, fuzzy, brightness)
+        conf = w_ir_mod * r.conf * (1.0 - params.lonely_penalty_IR)
         conf = _apply_prior(r.bbox_xyxy, conf, priors, prior_iou_gate, prior_bonus, no_prior_penalty)
         out.append(
             FusedDetection(

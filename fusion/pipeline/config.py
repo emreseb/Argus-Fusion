@@ -41,6 +41,13 @@ class PipelineConfig:
     # --- association (plan §3.1) ---
     require_same_class: bool = False
 
+    # --- box fusion (plan §3.2) ---
+    # "wbf": trust/confidence-weighted average of the EO+IR corners (plan default).
+    # "select": keep the higher-trust sensor's box verbatim, use the other only
+    # for confidence — avoids a low-trust box dragging a high-trust one off-target.
+    # The winner follows the same weights, so a stronger EO model shifts it back.
+    box_mode: str = "wbf"
+
     # --- tracking (plan §5) ---
     track_iou_gate: float = 0.3
     track_min_hits: int = 3
@@ -53,6 +60,20 @@ class PipelineConfig:
     prior_bonus: float = 0.15
     no_prior_penalty: float = 0.20
 
+    # --- optional self-calibrating EO->IR registration (registration.py) ---
+    # The plan assumes co-boresighted sensors; enable this when they are not.
+    use_registration: bool = False
+    registration_matrix_path: Optional[str] = None   # load a pre-fit affine and skip warm-up
+    reg_ir_size: Tuple[int, int] = (1280, 1024)       # (w, h) shared coordinate frame = IR
+    reg_min_pairs: int = 40                            # correspondences before attempting a fit
+    reg_max_residual: float = 8.0                      # lock only below this median error (px)
+
+    # --- optional fuzzy sensor-trust engine (fuzzy_trust.py) ---
+    # Replaces the per-regime modality_weight_* lookup with a smooth, size-aware
+    # EO/IR trust dial (brightness + target size). Penalties/threshold unchanged.
+    use_fuzzy_trust: bool = False
+    fuzzy_config_path: Optional[str] = None   # JSON overrides for the rule grid / knots
+
     # --- optional per-regime param override file (plan §6) ---
     params_path: Optional[str] = None
 
@@ -61,7 +82,7 @@ class PipelineConfig:
         with open(path, "r") as fh:
             raw = json.load(fh)
         # tuples survive JSON as lists; coerce the size fields back.
-        for key in ("brightness_resize", "target_size"):
+        for key in ("brightness_resize", "target_size", "reg_ir_size"):
             if isinstance(raw.get(key), list):
                 raw[key] = tuple(raw[key])
         unknown = set(raw) - {f.name for f in cls.__dataclass_fields__.values()}

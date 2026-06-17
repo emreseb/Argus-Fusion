@@ -94,6 +94,11 @@ def build_config(args) -> PipelineConfig:
         cfg.params_path = args.params
     if args.feedback:
         cfg.use_track_feedback = True
+    if args.register:
+        cfg.use_registration = True
+    if args.reg_matrix:
+        cfg.use_registration = True
+        cfg.registration_matrix_path = args.reg_matrix
     return cfg
 
 
@@ -108,9 +113,15 @@ def main() -> int:
     ap.add_argument("--device", help="auto | cpu | cuda:0 | mps")
     ap.add_argument("--no-sahi", action="store_true", help="plain YOLO instead of SAHI slicing")
     ap.add_argument("--feedback", action="store_true", help="enable trajectory feedback (plan §5)")
+    ap.add_argument("--register", action="store_true",
+                    help="self-calibrating EO->IR affine registration (non-coboresighted sensors)")
+    ap.add_argument("--reg-matrix", help="load a pre-fit affine .npy and skip warm-up")
+    ap.add_argument("--save-reg", help="after the run, save the locked affine to this .npy")
     ap.add_argument("--t-low", type=float, default=None, help="NIGHT/TWILIGHT brightness threshold")
     ap.add_argument("--t-high", type=float, default=None, help="TWILIGHT/DAY brightness threshold")
     ap.add_argument("--show", action="store_true", help="display an annotated window")
+    ap.add_argument("--step", action="store_true",
+                    help="with --show, pause on each frame (any key = next, 'q' = quit)")
     ap.add_argument("--save", help="write an annotated video to this path")
     ap.add_argument("--print", dest="do_print", action="store_true", help="print fused/track info")
     ap.add_argument("--max-frames", type=int, default=0, help="stop after N frames (0 = all)")
@@ -140,11 +151,16 @@ def main() -> int:
             if args.do_print:
                 fused = ", ".join(f"{'+'.join(f.support)}:{f.conf:.2f}" for f in result.fused) or "-"
                 trk = ", ".join(f"#{t.id}@({t.bbox[0]:.0f},{t.bbox[1]:.0f})" for t in result.tracks) or "-"
+                reg = result.extra.get("registration")
+                regs = (f" reg[{'LOCKED' if reg['locked'] else 'warmup'} "
+                        f"n={reg['n_pairs']} r={reg['residual_px']:.1f}px]") if reg else ""
                 print(f"[{i:05d}] {result.regime.value:8s} meanV={result.mean_v:5.1f} "
-                      f"EO={len(result.eo_dets)} IR={len(result.ir_dets)} | fused[{fused}] | tracks[{trk}]")
+                      f"EO={len(result.eo_dets)} IR={len(result.ir_dets)} | fused[{fused}] | tracks[{trk}]{regs}")
 
             if args.show or args.save:
-                vis = draw_result(eo_img, result, cfg.class_names)
+                # With registration everything lives in the IR frame; draw there.
+                canvas = ir_img if cfg.use_registration else eo_img
+                vis = draw_result(canvas, result, cfg.class_names)
                 if args.save:
                     if writer is None:
                         h, w = vis.shape[:2]
@@ -153,7 +169,7 @@ def main() -> int:
                     writer.write(vis)
                 if args.show:
                     cv2.imshow(win, vis)
-                    if (cv2.waitKey(1) & 0xFF) == ord("q"):
+                    if (cv2.waitKey(0 if args.step else 1) & 0xFF) == ord("q"):
                         break
 
             n += 1
@@ -164,6 +180,11 @@ def main() -> int:
             writer.release()
         if args.show:
             cv2.destroyAllWindows()
+
+    if args.save_reg and pipe.registrar is not None and pipe.registrar.locked:
+        pipe.registrar.save(args.save_reg)
+        print(f"Saved registration affine -> {args.save_reg} "
+              f"(residual {pipe.registrar.last_residual:.1f}px, {pipe.registrar.n_pairs} pairs)")
 
     print(f"Processed {n} frame pair(s).")
     return 0

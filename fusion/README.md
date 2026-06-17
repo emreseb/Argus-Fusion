@@ -5,10 +5,15 @@ brightness-aware **late (detection-level) fusion** of an EO and an IR detector
 into one decided box + fused confidence per frame, then a Kalman tracker that
 confirms targets over time.
 
-> The loose alignment scripts already in this `fusion/` folder
-> (`SIFT-align.py`, `auto-align-ecc.py`, …) are **not** part of this pipeline —
-> the plan assumes co-boresighted sensors and skips spatial registration. They
-> stay available for the day the hardware needs software co-registration.
+> The original plan assumed **co-boresighted** sensors and skipped spatial
+> registration. Real EO/IR footage turned out **not** to be co-boresighted (the
+> two cameras differ in pointing *and* field of view), so detections never
+> overlapped and nothing fused. The pipeline now has an optional, **self-calibrating
+> registration** stage (`pipeline/registration.py`) that learns an EO→IR affine
+> from the detections themselves — see [Registration](#registration-non-co-boresighted-sensors)
+> below and [`docs/eo-ir-registration-explained.md`](../docs/eo-ir-registration-explained.md).
+> The loose alignment scripts (`SIFT-align.py`, `auto-align-ecc.py`, …) remain as
+> alternative, manual ways to obtain a transform.
 
 ## Layout
 
@@ -56,6 +61,37 @@ EO and IR inputs may each be a **video file** or a **directory of frames**;
 frames are paired by index (sensors assumed frame-synced). Device (CUDA/MPS/CPU)
 is auto-detected; force it with `--device`. Use `--no-sahi` for plain YOLO when
 targets are large.
+
+## Registration (non-co-boresighted sensors)
+
+If the EO and IR cameras are **not** co-boresighted, detections live in different
+coordinate frames, their IoU is ~0, and fusion never fires. Enable the
+self-calibrating affine to map EO detections into the IR frame:
+
+```bash
+# self-calibrate live: learns the EO->IR affine from single-target frames,
+# locks once the target has roamed enough, then fuses. Save the matrix at the end.
+python fusion/run_fusion.py --eo eo.mp4 --ir ir.mp4 \
+    --eo-model eo.pt --ir-model ir.pt \
+    --register --save-reg eo2ir.npy --save out.mp4
+
+# deploy: load the saved affine — zero warm-up, fuses from frame 0.
+python fusion/run_fusion.py --eo eo.mp4 --ir ir.mp4 \
+    --eo-model eo.pt --ir-model ir.pt \
+    --reg-matrix eo2ir.npy --show
+```
+
+How it works (`pipeline/registration.py`): on frames with exactly one confident EO
+and one confident IR box the pairing is unambiguous, so a correspondence
+`EO-center → IR-center` is recorded without needing a transform; once the
+accumulated points cover enough 2-D spread (a stationary target can't constrain
+scale/rotation) a RANSAC affine is fit and **locked**, then refined as more of the
+trajectory arrives. Because the optics are fixed, calibrate once and reuse the
+saved matrix. Knobs live in `PipelineConfig` (`use_registration`,
+`registration_matrix_path`, `reg_ir_size`, `reg_min_pairs`, `reg_max_residual`).
+A translation/crop **cannot** substitute for this when the sensors differ in field
+of view — only an affine/homography can. Full rationale + numbers:
+[`docs/eo-ir-registration-explained.md`](../docs/eo-ir-registration-explained.md).
 
 ## Using it as a library
 

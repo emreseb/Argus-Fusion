@@ -11,6 +11,8 @@ runs/
 test-source/
 bestmodels/
 archive/
+
+
 datasetf_output/
 .DS_Store
 
@@ -20,6 +22,10 @@ datasetf_output/
 *.json
 *.deb
 *.html
+*.csv
+*html
+*.yaml
+*.drawio
 
 
 # Virtual Environments

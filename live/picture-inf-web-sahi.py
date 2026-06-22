@@ -38,8 +38,15 @@ def load_sahi_model():
 
 def extract_key_and_frame(filename):
     match = re.search(r'([A-Z]+\d+).*?(\d+)$', filename)
-    if match: return match.group(1), int(match.group(2))
-    return None, None
+    if not match:
+        return None, None
+    key = match.group(1)
+    # Filenames are prefixed with a category bit, e.g. "1_..." or "2_...".
+    # Include it in the key so different categories don't collide/overwrite.
+    cat_match = re.match(r'(\d+)_', filename)
+    if cat_match:
+        key = f"{cat_match.group(1)}_{key}"
+    return key, int(match.group(2))
 
 def get_sensor_type(root_path, filename):
     path_str = root_path.replace('\\', '/')
@@ -91,12 +98,15 @@ def draw_visuals(image_path, label_path, show_gt, show_sahi, sahi_model):
 
     # 1. Draw Ground Truth (RED)
     if show_gt and label_path and os.path.exists(label_path):
-        with open(label_path, 'r') as f:
+        with open(label_path, 'r', encoding='utf-8', errors='ignore') as f:
             for line in f:
                 parts = line.strip().split()
                 if len(parts) >= 5:
                     class_id = parts[0]
-                    x_c, y_c, w, h = map(float, parts[1:5])
+                    try:
+                        x_c, y_c, w, h = map(float, parts[1:5])
+                    except ValueError:
+                        continue  # skip non-YOLO lines
                     
                     left = (x_c - w / 2) * img_width
                     top = (y_c - h / 2) * img_height

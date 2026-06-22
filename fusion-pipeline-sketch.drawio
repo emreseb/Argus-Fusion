@@ -4,7 +4,13 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="0VrP4KXR6jM0h1UQ-ULK-5" edge="1" parent="1" source="0VrP4KXR6jM0h1UQ-ULK-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="0VrP4KXR6jM0h1UQ-ULK-4">
+        <mxCell id="0VrP4KXR6jM0h1UQ-ULK-5" edge="1" parent="1" source="0VrP4KXR6jM0h1UQ-ULK-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="regSketch" value="EO boxes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="regSketch" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Registration EO→IR&#xa;(self-calibrating affine;&#xa;sensors not co-boresighted)" vertex="1">
+          <mxGeometry height="60" width="180" x="80" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="regSketchEdge" edge="1" parent="1" source="regSketch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="0VrP4KXR6jM0h1UQ-ULK-4" value="EO boxes in IR frame">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="0VrP4KXR6jM0h1UQ-ULK-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="EO Model" vertex="1">

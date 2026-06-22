@@ -91,7 +91,7 @@ DEFAULT_PARAMS: Dict[Regime, RegimeParams] = {
         assoc_iou=0.40,
         agreement_bonus=0.20,
         lonely_penalty_EO=0.15,
-        lonely_penalty_IR=0.15,
+        lonely_penalty_IR=0.10,   # low light: trust a lone IR detection (toward NIGHT)
         decision_threshold=0.45,
     ),
     Regime.NIGHT: RegimeParams(

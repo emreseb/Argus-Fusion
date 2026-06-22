@@ -1,4 +1,6 @@
-# EO/IR Drone Detection & Late-Fusion Pipeline
+# Argus-Fusion
+
+> *EO/IR sensor-fusion pipeline for drone detection — day or night.*
 
 A research codebase for **detecting drones in dual-sensor (electro-optical + infrared) video** and
 **fusing the two streams into a single, more reliable decision**. It pairs a modular fusion pipeline
@@ -18,18 +20,18 @@ repo is the scaffolding that produced and validated it.
 
 ## What it does
 
-| Capability | Where |
-|---|---|
-| **Late (detection-level) fusion** of EO + IR — IoU association → Weighted Box Fusion / ProbEn → noisy-OR confidence | `fusion/pipeline/fusion.py`, `fusion/pipeline/proben.py` |
-| **Self-calibrating EO→IR registration** — recovers the affine transform automatically from detections (no checkerboard, no manual points), with RANSAC | `fusion/pipeline/registration.py` |
-| **Brightness-regime adaptation** — DAY / TWILIGHT / NIGHT switch that retunes thresholds and per-sensor trust | `fusion/pipeline/params.py`, `fusion/pipeline/regime.py` |
-| **Fuzzy sensor-trust engine** — smooth EO/IR weighting that replaces the hard regime table | `fusion/pipeline/fuzzy_trust.py` |
-| **Kalman trajectory tracking** with greedy IoU matching, used as a prior for feedback | `fusion/pipeline/tracking.py` |
-| **EO low-light preprocessing** — gamma / CLAHE enhancement | `fusion/pipeline/preprocess.py` |
-| **Detection / evaluation metrics** — numpy-only precision/recall/F1/AP, plus EO-vs-IR comparisons | `fusion/eval/`, `model-eval/` |
-| **Dataset tooling** — dual-sensor frame extraction, EO/IR pairing, train/test split, stats & plots | `frames/`, `dataset/`, `CVAT-Stats/` |
-| **Annotation review** — a Flask web tool for flipping/fixing labels | `bit-flipper/` |
-| **Live & viewer tools** — Streamlit viewers and SAHI tiled inference | `live/`, `view_all.py` |
+| Capability                                                                                                                                                     | Where                                                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Late (detection-level) fusion** of EO + IR — IoU association → Weighted Box Fusion / ProbEn → noisy-OR confidence                                   | `fusion/pipeline/fusion.py`, `fusion/pipeline/proben.py` |
+| **Self-calibrating EO→IR registration** — recovers the affine transform automatically from detections (no checkerboard, no manual points), with RANSAC | `fusion/pipeline/registration.py`                          |
+| **Brightness-regime adaptation** — DAY / TWILIGHT / NIGHT switch that retunes thresholds and per-sensor trust                                           | `fusion/pipeline/params.py`, `fusion/pipeline/regime.py` |
+| **Fuzzy sensor-trust engine** — smooth EO/IR weighting that replaces the hard regime table                                                              | `fusion/pipeline/fuzzy_trust.py`                           |
+| **Kalman trajectory tracking** with greedy IoU matching, used as a prior for feedback                                                                    | `fusion/pipeline/tracking.py`                              |
+| **EO low-light preprocessing** — gamma / CLAHE enhancement                                                                                              | `fusion/pipeline/preprocess.py`                            |
+| **Detection / evaluation metrics** — numpy-only precision/recall/F1/AP, plus EO-vs-IR comparisons                                                       | `fusion/eval/`, `model-eval/`                            |
+| **Dataset tooling** — dual-sensor frame extraction, EO/IR pairing, train/test split, stats & plots                                                      | `frames/`, `dataset/`, `CVAT-Stats/`                   |
+| **Annotation review** — a Flask web tool for flipping/fixing labels                                                                                     | `bit-flipper/`                                             |
+| **Live & viewer tools** — Streamlit viewers and SAHI tiled inference                                                                                    | `live/`, `view_all.py`                                   |
 
 ---
 
@@ -74,23 +76,23 @@ logged detections).
 
 ## Repository map
 
-| Path | What's there |
-|---|---|
-| `fusion/pipeline/` | The fusion engine (config, sync, regime, inference, registration, fusion, tracking, fuzzy trust, preprocess, viz) |
-| `fusion/eval/` | numpy-only detection metrics (precision/recall/F1/AP) |
-| `fusion/run_fusion.py` | CLI driver for the whole pipeline |
-| `fusion/demo_synthetic.py` | Self-contained synthetic day→night scenario + unit checks |
-| `fusion/*.py` | Standalone registration experiments (SIFT, ECC, edge/MI alignment, homography) |
-| `frames/` | Dual-sensor video → synced frame extraction |
-| `dataset/` | Pairing, train/test split, dataset cleaning & audit scripts |
-| `CVAT-Stats/` | Dataset statistics and condition/sensor breakdown plots |
-| `bit-flipper/` | Flask web tool for reviewing and fixing labels |
-| `trainers/` | YOLO training scripts (CPU / GPU / Mac) |
-| `live/` | Inference tools, incl. SAHI tiled inference and a web viewer |
-| `model-eval/` | Model evaluation scripts and one-shot eval |
-| `yaml-files/` | Dataset / training configs |
-| `view_all.py` | Streamlit viewer for images + labels |
-| `docs/` | Design plan, EO/IR registration explainer, report drafts (PDF) |
+| Path                         | What's there                                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `fusion/pipeline/`         | The fusion engine (config, sync, regime, inference, registration, fusion, tracking, fuzzy trust, preprocess, viz) |
+| `fusion/eval/`             | numpy-only detection metrics (precision/recall/F1/AP)                                                             |
+| `fusion/run_fusion.py`     | CLI driver for the whole pipeline                                                                                 |
+| `fusion/demo_synthetic.py` | Self-contained synthetic day→night scenario + unit checks                                                        |
+| `fusion/*.py`              | Standalone registration experiments (SIFT, ECC, edge/MI alignment, homography)                                    |
+| `frames/`                  | Dual-sensor video → synced frame extraction                                                                      |
+| `dataset/`                 | Pairing, train/test split, dataset cleaning & audit scripts                                                       |
+| `CVAT-Stats/`              | Dataset statistics and condition/sensor breakdown plots                                                           |
+| `bit-flipper/`             | Flask web tool for reviewing and fixing labels                                                                    |
+| `trainers/`                | YOLO training scripts (CPU / GPU / Mac)                                                                           |
+| `live/`                    | Inference tools, incl. SAHI tiled inference and a web viewer                                                      |
+| `model-eval/`              | Model evaluation scripts and one-shot eval                                                                        |
+| `yaml-files/`              | Dataset / training configs                                                                                        |
+| `view_all.py`              | Streamlit viewer for images + labels                                                                              |
+| `docs/`                    | Design plan, EO/IR registration explainer, report drafts (PDF)                                                    |
 
 ---
 
@@ -214,9 +216,3 @@ models directly — so it is the portable part.
 
 Released under the [MIT License](LICENSE) © 2025-2026 Sebahattin Saral — free to use, modify, and
 distribute; just keep the copyright notice.
-
----
-
-<sub>🧭 This repository's architecture was mapped with
-[graphify](https://github.com/sponsors/safishamsi) — 510 nodes / 914 edges across 60 communities,
-which is how this README was assembled from the code and design docs.</sub>

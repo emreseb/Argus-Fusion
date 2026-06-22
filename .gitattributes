@@ -1,0 +1,6 @@
+# Keep GitHub's language stats focused on the actual Python codebase.
+# The Jupyter notebooks here are third-party / example code (Grounding-DINO)
+# whose embedded cell outputs (base64 images) bloat the byte count and
+# wrongly dominate the language bar. Mark them vendored so Linguist ignores
+# them for language detection (the files are still kept and viewable).
+*.ipynb linguist-vendored

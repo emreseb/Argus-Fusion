@@ -12,6 +12,7 @@ test-source/
 bestmodels/
 archive/
 GROUNDING-DINO/
+docs/
 
 
 datasetf_output/

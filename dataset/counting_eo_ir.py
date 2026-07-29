@@ -51,10 +51,10 @@ def count_sensor_images(img_dir: Path, eo_dest: Path, ir_dest: Path):
 
 
 def main():
-    base_dir = Path("/home/emre/Desktop/NATO/DATASETv3/labels(removed empty txts)/obj_train_data")
+    base_dir = Path("/media/emre/SEB/02JulyBackup/NATO/DATASETv3/labels(removed empty txts)/obj_train_data")
     
-    eo_dest = Path("/home/emre/Desktop/NATO/DATASETv3/training-eo-ir-seperated/EO-labels")
-    ir_dest = Path("/home/emre/Desktop/NATO/DATASETv3/training-eo-ir-seperated/IR-labels")
+    eo_dest = Path("/media/emre/SEB/02JulyBackup/NATO/DATASETv3/training-eo-ir-seperated/EO/labels")
+    ir_dest = Path("/media/emre/SEB/02JulyBackup/NATO/DATASETv3/training-eo-ir-seperated/IR/labels")
     
     if not base_dir.exists():
         print(f"Error: Directory '{base_dir}' does not exist.")
